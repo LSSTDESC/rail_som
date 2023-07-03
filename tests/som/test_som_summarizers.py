@@ -6,7 +6,7 @@ import qp
 from rail.core.data import TableHandle
 from rail.core.stage import RailStage
 from rail.core.utils import RAILDIR
-from rail.estimation.algos import simpleSOM
+from rail.estimation.algos import minisom_som
 
 testszdata = os.path.join(RAILDIR, "rail/examples_data/testdata/training_100gal.hdf5")
 testphotdata = os.path.join(RAILDIR, "rail/examples_data/testdata/validation_10gal.hdf5")
@@ -61,8 +61,8 @@ def one_algo(key, inform_class, summarizer_class, summary_kwargs):
 
 def test_SimpleSOM():
     summary_config_dict = {"m_dim": 21, "n_dim": 21, "column_usage": "colors"}
-    inform_class = simpleSOM.Inform_SimpleSOMSummarizer
-    summarizerclass = simpleSOM.SimpleSOMSummarizer
+    inform_class = minisom_som.MiniSOMInformer
+    summarizerclass = minisom_som.MiniSOMSummarizer
     _ = one_algo("SimpleSOM", inform_class, summarizerclass, summary_config_dict)
 
 
@@ -73,6 +73,6 @@ def test_SimpeSOM_with_mag_and_colors():
         "column_usage": "magandcolors",
         "objid_name": "id",
     }
-    inform_class = simpleSOM.Inform_SimpleSOMSummarizer
-    summarizerclass = simpleSOM.SimpleSOMSummarizer
+    inform_class = minisom_som.MiniSOMInformer
+    summarizerclass = minisom_som.MiniSOMSummarizer
     _ = one_algo("SimpleSOM_wmag", inform_class, summarizerclass, summary_config_dict)
