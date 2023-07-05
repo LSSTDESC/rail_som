@@ -16,28 +16,39 @@ from rail.core.common_params import SHARED_PARAMS
 
 
 
-def _computemagcolordata(data, ref_column_name, column_names, colusage):
-    if colusage not in ['colors', 'magandcolors', 'columns']:  # pragma: no cover
-        raise ValueError(f"column usage value {colusage} is not valid, valid values are 'colors', 'magandcolors', and 'columns'")
-    numcols = len(column_names)
+def _computemagcolordata(data, mag_column_name, column_names_for_color, colusage):
+    '''
+    This function is used to construct a data array for SOM training.
+    Input: 
+    data: a dictionary of data vectors that was read from a catalog;
+    mag_column_name: a list of string indicating the column names of magnitudes to directly used to train the SOM;
+    column_names_for_color: a list of string indicating the column names of magnitudes to calculate colors. The colors are calculated as difference between two adjacent columns.;
+    colusage: a string indicating the method to constructing training data:
+        'magandcolors': magnitude (from mag_column_name) and colors (calculated from column_names_for_color);
+        'colors': colors calculated from column_names_for_color;
+        'mags': magnitudes indicated by mag_column_name
+    '''
+    if colusage not in ['colors', 'magandcolors', 'mags']:
+        raise ValueError(f"column usage value {colusage} is not valid, valid values are 'colors', 'magandcolors', and 'mags'")
+    numcols = len(column_names_for_color)
     if colusage == 'magandcolors':
-        coldata = np.array(data[ref_column_name])
+        coldata = np.array(data[mag_column_name])
         for i in range(numcols - 1):
-            tmpcolor = data[column_names[i]] - data[column_names[i + 1]]
+            tmpcolor = data[column_names_for_color[i]] - data[column_names_for_color[i + 1]]
             coldata = np.vstack((coldata, tmpcolor))
     if colusage == 'colors':
-        coldata = np.array(data[column_names[0]] - data[column_names[1]])
+        coldata = np.array(data[column_names_for_color[0]] - data[column_names_for_color[1]])
         for i in range(numcols - 2):
-            tmpcolor = data[column_names[i + 1]] - data[column_names[i + 2]]
+            tmpcolor = data[column_names_for_color[i + 1]] - data[column_names_for_color[i + 2]]
             coldata = np.vstack((coldata, tmpcolor))
-    if colusage == 'columns':  # pragma: no cover
-        coldata = np.array(data[column_names[0]])
+    if colusage == 'mags':
+        coldata = np.array(data[mag_column_names[0]])
         for i in range(numcols - 1):
-            coldata = np.vstack((coldata, np.array(data[column_names[i + 1]])))
+            coldata = np.vstack((coldata, np.array(data[mag_column_names[i + 1]])))
     return coldata.T
 
 
-def get_bmus(som, data=None, split=200):  # pragma: no cover
+def get_bmus(som, data=None, split=200):
     '''
     This function gets the "best matching unit (bmu)" of a given data on a pre-trained SOM.
     It works by multiprocessing chunks of the data.
@@ -179,7 +190,7 @@ class Inform_somocluSOMSummarizer(CatInformer):
                           redshift_col=SHARED_PARAMS,
                           hdf5_groupname=SHARED_PARAMS,
                           column_usage=Param(str, "magandcolors", msg="switch for how SOM uses columns, valid values are "
-                                             + "'colors','magandcolors', and 'columns'"),
+                                             + "'colors','magandcolors', and 'mags'"),
                           seed=Param(int, 0, msg="Random number seed"),
                           n_rows=Param(int, 31, msg="number of cells in SOM y dimension"),
                           n_columns=Param(int, 31, msg="number of cells in SOM x dimension"),
@@ -334,6 +345,9 @@ class somocluSOMSummarizer(SZPZSummarizer):
         self.n_columns = None
 
     def replace_non_detections(self, data):
+        '''
+        Replace non-detected data with magnitude limits.
+        '''
         for col in self.usecols:
             if np.isnan(self.config.nondetect_val):  # pragma: no cover
                 mask = np.isnan(data[col])
@@ -342,7 +356,10 @@ class somocluSOMSummarizer(SZPZSummarizer):
             data[col][mask] = self.config.mag_limits[col]
 
     def set_weight_column(self, data, weight_col):
-        # assign weight vecs if present, else set all to 1.0
+        '''
+        Assign weight vecs if present, else set all to 1.0.
+        weight_col: column name of weights.
+        '''
         if weight_col == "":
             data["weight"] = np.ones(len(data[self.usecols[0]]))
         elif weight_col in data.keys():  # pragma: no cover
@@ -352,15 +369,18 @@ class somocluSOMSummarizer(SZPZSummarizer):
             raise KeyError(f"Weight column {weight_col} not present in data!")
 
     def get_som_coordinates(self, data, weight_col):
+        '''
+        Find the bmus coordinate of each item in the data.
+        '''
         # replace nondetects
         self.replace_non_detections(data)
         self.set_weight_column(data, weight_col)
 
         # find the best cells for this data set
-        colors = _computemagcolordata(data, self.ref_column_name,
+        test_data = _computemagcolordata(data, self.ref_column_name,
                                            self.usecols, self.column_usage)
 
-        som_coords = get_bmus(self.som, colors, self.config.split).T
+        som_coords = get_bmus(self.som, test_data, self.config.split).T
 
         return som_coords
 

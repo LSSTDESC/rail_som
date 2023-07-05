@@ -75,4 +75,37 @@ def test_SomocluSOM_with_mag_and_colors():
     }
     inform_class = somocluSOM.Inform_somocluSOMSummarizer
     summarizerclass = somocluSOM.somocluSOMSummarizer
+    _ = one_algo("SOMoclu_wmagc", inform_class, summarizerclass, summary_config_dict)
+
+def test_SomocluSOM_with_colors():
+    summary_config_dict = {
+        "n_rows": 21,
+        "n_columns": 21,
+        "column_usage": "colors",
+        "objid_name": "id",
+    }
+    inform_class = somocluSOM.Inform_somocluSOMSummarizer
+    summarizerclass = somocluSOM.somocluSOMSummarizer
+    _ = one_algo("SOMoclu_wcolor", inform_class, summarizerclass, summary_config_dict)
+
+def test_SomocluSOM_with_colors():
+    summary_config_dict = {
+        "n_rows": 21,
+        "n_columns": 21,
+        "column_usage": "mags",
+        "objid_name": "id",
+    }
+    inform_class = somocluSOM.Inform_somocluSOMSummarizer
+    summarizerclass = somocluSOM.somocluSOMSummarizer
     _ = one_algo("SOMoclu_wmag", inform_class, summarizerclass, summary_config_dict)
+
+def test_SomocluSOM_with_badinput():
+    summary_config_dict = {
+        "n_rows": 21,
+        "n_columns": 21,
+        "column_usage": "something",
+        "objid_name": "id",
+    }
+    inform_class = somocluSOM.Inform_somocluSOMSummarizer
+    summarizerclass = somocluSOM.somocluSOMSummarizer
+    _ = one_algo("SOMoclu_wrong", inform_class, summarizerclass, summary_config_dict)
