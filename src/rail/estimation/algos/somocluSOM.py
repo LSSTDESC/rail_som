@@ -48,30 +48,26 @@ def _computemagcolordata(data, mag_column_name, column_names, colusage):
     return coldata.T
 
 
-def get_bmus(som, data=None, split=200):
+def get_bmus(som, data, split=200):
     '''
     This function gets the "best matching unit (bmu)" of a given data on a pre-trained SOM.
     It works by multiprocessing chunks of the data.
     Input:
     som: a pre-trained Somoclu object;
-    data: np.ndarray of the data vector. If None, then use the training data stored in the som object;
+    data: np.ndarray of the data vector.
     split: an integer specifying the size of data chunks when calculating the distances between the codebook and data;
     '''
+    codebookReshaped = som.codebook.reshape(
+        som.codebook.shape[0] * som.codebook.shape[1], som.codebook.shape[2])
+    parts = np.array_split(data, split, axis=0)
+    dmap = np.zeros((data.shape[0], som._n_columns * som._n_rows))
+    
+    i = 0
+    for part in parts:
+        dmap[i:i + part.shape[0]] = cdist((part), codebookReshaped, 'euclidean')
+        i = i + part.shape[0]
 
-    if data is None:
-        bmus = som.bmus
-    else:
-        codebookReshaped = som.codebook.reshape(
-            som.codebook.shape[0] * som.codebook.shape[1], som.codebook.shape[2])
-        parts = np.array_split(data, split, axis=0)
-        dmap = np.zeros((data.shape[0], som._n_columns * som._n_rows))
-
-        i = 0
-        for part in parts:
-            dmap[i:i + part.shape[0]] = cdist((part), codebookReshaped, 'euclidean')
-            i = i + part.shape[0]
-
-        bmus = som.get_bmus(dmap)
+    bmus = som.get_bmus(dmap)
     return bmus
 
 
