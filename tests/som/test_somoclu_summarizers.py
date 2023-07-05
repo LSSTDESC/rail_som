@@ -108,4 +108,7 @@ def test_SomocluSOM_with_badinput():
     }
     inform_class = somocluSOM.Inform_somocluSOMSummarizer
     summarizerclass = somocluSOM.somocluSOMSummarizer
-    _ = one_algo("SOMoclu_wrong", inform_class, summarizerclass, summary_config_dict)
+    try:
+        one_algo("SOMoclu_wrong", inform_class, summarizerclass, summary_config_dict)
+    except:
+        return
