@@ -16,35 +16,35 @@ from rail.core.common_params import SHARED_PARAMS
 
 
 
-def _computemagcolordata(data, mag_column_names, column_names_for_color, colusage):
+def _computemagcolordata(data, mag_column_name, column_names, colusage):
     '''
     This function is used to construct a data array for SOM training.
     Input: 
     data: a dictionary of data vectors that was read from a catalog;
-    mag_column_names: a list of string indicating the column names of magnitudes to directly used to train the SOM;
-    column_names_for_color: a list of string indicating the column names of magnitudes to calculate colors. The colors are calculated as difference between two adjacent columns.;
+    mag_column_name: a indicating the column name of magnitudes to directly used to train the SOM;
+    column_names: a list of string indicating the column names of magnitudes to calculate colors (if colusage is 'colors' or 'magandcolors'), or directly used to train the SOM (if colusage is 'columns').
     colusage: a string indicating the method to constructing training data:
-        'magandcolors': magnitude (from mag_column_names) and colors (calculated from column_names_for_color);
-        'colors': colors calculated from column_names_for_color;
-        'mags': magnitudes indicated by mag_column_names
+        'magandcolors': magnitude (from mag_column_name) and colors (calculated from column_names);
+        'colors': colors calculated from column_names;
+        'columns': columns indicated by column_names
     '''
-    if colusage not in ['colors', 'magandcolors', 'mags']:
-        raise ValueError(f"column usage value {colusage} is not valid, valid values are 'colors', 'magandcolors', and 'mags'")
-    numcols = len(column_names_for_color)
+    if colusage not in ['colors', 'magandcolors', 'columns']:
+        raise ValueError(f"column usage value {colusage} is not valid, valid values are 'colors', 'magandcolors', and 'columns'")
+    numcols = len(column_names)
     if colusage == 'magandcolors':
-        coldata = np.array(data[mag_column_names])
+        coldata = np.array(data[mag_column_name])
         for i in range(numcols - 1):
-            tmpcolor = data[column_names_for_color[i]] - data[column_names_for_color[i + 1]]
+            tmpcolor = data[column_names[i]] - data[column_names[i + 1]]
             coldata = np.vstack((coldata, tmpcolor))
     if colusage == 'colors':
-        coldata = np.array(data[column_names_for_color[0]] - data[column_names_for_color[1]])
+        coldata = np.array(data[column_names[0]] - data[column_names[1]])
         for i in range(numcols - 2):
-            tmpcolor = data[column_names_for_color[i + 1]] - data[column_names_for_color[i + 2]]
+            tmpcolor = data[column_names[i + 1]] - data[column_names[i + 2]]
             coldata = np.vstack((coldata, tmpcolor))
-    if colusage == 'mags':
-        coldata = np.array(data[mag_column_names[0]])
+    if colusage == 'columns':
+        coldata = np.array(data[column_names[0]])
         for i in range(numcols - 1):
-            coldata = np.vstack((coldata, np.array(data[mag_column_names[i + 1]])))
+            coldata = np.vstack((coldata, np.array(data[column_names[i + 1]])))
     return coldata.T
 
 

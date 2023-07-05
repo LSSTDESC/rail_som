@@ -88,11 +88,11 @@ def test_SomocluSOM_with_colors():
     summarizerclass = somocluSOM.somocluSOMSummarizer
     _ = one_algo("SOMoclu_wcolor", inform_class, summarizerclass, summary_config_dict)
 
-def test_SomocluSOM_with_colors():
+def test_SomocluSOM_with_columns():
     summary_config_dict = {
         "n_rows": 21,
         "n_columns": 21,
-        "column_usage": "mags",
+        "column_usage": "columns",
         "objid_name": "id",
     }
     inform_class = somocluSOM.Inform_somocluSOMSummarizer
