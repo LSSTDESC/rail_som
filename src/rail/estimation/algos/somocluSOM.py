@@ -16,23 +16,23 @@ from rail.core.common_params import SHARED_PARAMS
 
 
 
-def _computemagcolordata(data, mag_column_name, column_names_for_color, colusage):
+def _computemagcolordata(data, mag_column_names, column_names_for_color, colusage):
     '''
     This function is used to construct a data array for SOM training.
     Input: 
     data: a dictionary of data vectors that was read from a catalog;
-    mag_column_name: a list of string indicating the column names of magnitudes to directly used to train the SOM;
+    mag_column_names: a list of string indicating the column names of magnitudes to directly used to train the SOM;
     column_names_for_color: a list of string indicating the column names of magnitudes to calculate colors. The colors are calculated as difference between two adjacent columns.;
     colusage: a string indicating the method to constructing training data:
-        'magandcolors': magnitude (from mag_column_name) and colors (calculated from column_names_for_color);
+        'magandcolors': magnitude (from mag_column_names) and colors (calculated from column_names_for_color);
         'colors': colors calculated from column_names_for_color;
-        'mags': magnitudes indicated by mag_column_name
+        'mags': magnitudes indicated by mag_column_names
     '''
     if colusage not in ['colors', 'magandcolors', 'mags']:
         raise ValueError(f"column usage value {colusage} is not valid, valid values are 'colors', 'magandcolors', and 'mags'")
     numcols = len(column_names_for_color)
     if colusage == 'magandcolors':
-        coldata = np.array(data[mag_column_name])
+        coldata = np.array(data[mag_column_names])
         for i in range(numcols - 1):
             tmpcolor = data[column_names_for_color[i]] - data[column_names_for_color[i + 1]]
             coldata = np.vstack((coldata, tmpcolor))
