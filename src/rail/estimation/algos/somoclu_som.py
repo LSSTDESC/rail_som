@@ -123,7 +123,7 @@ def plot_som(ax, som_map, grid_type='rectangular', colormap=cm.viridis, cbar_nam
     ax.axis('off')
 
 
-class Inform_somocluSOMSummarizer(CatInformer):
+class SOMocluInformer(CatInformer):
     """Summarizer that uses a SOM to construct a weighted sum
     of spec-z objects in the same SOM cell as each photometric
     galaxy in order to estimate the overall N(z).  This is
@@ -169,7 +169,7 @@ class Inform_somocluSOMSummarizer(CatInformer):
       pickle file containing the `somoclu` SOM object that
     will be used by the estimation/summarization stage
     """
-    name = 'Inform_SOMoclu'
+    name = 'SOMocluInformer'
     config_options = CatInformer.config_options.copy()
     config_options.update(nondetect_val=SHARED_PARAMS,
                           mag_limits=SHARED_PARAMS,
@@ -233,7 +233,7 @@ class Inform_somocluSOMSummarizer(CatInformer):
         self.add_data('model', self.model)
 
 
-class somocluSOMSummarizer(SZPZSummarizer):
+class SOMocluSummarizer(SZPZSummarizer):
     """Quick implementation of a SOM-based summarizer. It will
     group a pre-trained SOM into hierarchical clusters and assign
     a galaxy sample into SOM cells and clusters. Then it
@@ -298,7 +298,7 @@ class somocluSOMSummarizer(SZPZSummarizer):
     qp_ens: qp Ensemble
       ensemble of bootstrap realizations of the estimated N(z) for the input photometric data
     """
-    name = 'somocluSOMSummarizer'
+    name = 'SOMocluSummarizer'
     config_options = SZPZSummarizer.config_options.copy()
     config_options.update(zmin=SHARED_PARAMS,
                           zmax=SHARED_PARAMS,
