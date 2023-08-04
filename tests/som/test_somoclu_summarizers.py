@@ -55,7 +55,7 @@ def one_algo(key, inform_class, summarizer_class, summary_kwargs):
     meanz = fid_ens.mean().flatten()
     assert np.isclose(meanz[0], 0.14414913252122552, atol=0.025)
     
-    full_useful_clusters = np.asarray(list(_.useful_clusters))
+    full_useful_clusters = np.asarray(list(summarizer2.useful_clusters))
     full_uncovered_clusters = np.setdiff1d(np.arange(31*31), full_useful_clusters)
     
     summary_config_dict = {"n_rows": 31, "n_columns": 31, "column_usage": "colors", "useful_clusters": np.arange(31*31)}
