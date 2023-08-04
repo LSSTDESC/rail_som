@@ -220,7 +220,7 @@ class SOMocluInformer(CatInformer):
                                       self.config.bands, self.config.column_usage)
 
         som = Somoclu(self.config.n_columns, self.config.n_rows,
-                      gridtype=self.config.gridtype,
+                      gridtype=self.config.gridtype,compactsupport=False,
                       maptype=self.config.maptype, initialization='pca')
 
         som.train(colors)
