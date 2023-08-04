@@ -86,20 +86,20 @@ def test_SomocluSOM_useful_clusters():
     summary_config_dict = {"n_rows": 21, "n_columns": 21, "column_usage": "colors"}
     inform_class = somoclu_som.SOMocluInformer
     summarizerclass = somoclu_som.SOMocluSummarizer
-    _, full_useful_clusters, full_uncovered_clusters = one_algo("SOMomoclu", inform_class, summarizerclass, summary_config_dict)
+    _, full_useful_clusters, full_uncovered_clusters = one_algo("SOMomoclu1", inform_class, summarizerclass, summary_config_dict)
     
     summary_config_dict = {"n_rows": 31, "n_columns": 31, "column_usage": "colors", "useful_clusters": np.arange(31*31)}
     inform_class = somoclu_som.SOMocluInformer
     summarizerclass = somoclu_som.SOMocluSummarizer
-    _ = one_algo("SOMomoclu", inform_class, summarizerclass, summary_config_dict)  
+    _ = one_algo("SOMomoclu2", inform_class, summarizerclass, summary_config_dict)  
     
     summary_config_dict = {"n_rows": 31, "n_columns": 31, "column_usage": "colors", "useful_clusters": full_useful_clusters}
     inform_class = somoclu_som.SOMocluInformer
     summarizerclass = somoclu_som.SOMocluSummarizer
-    _ = one_algo("SOMomoclu", inform_class, summarizerclass, summary_config_dict)  
+    _ = one_algo("SOMomoclu3", inform_class, summarizerclass, summary_config_dict)  
     
     summary_config_dict = {"n_rows": 31, "n_columns": 31, "column_usage": "colors", "useful_clusters": full_uncovered_clusters}
     inform_class = somoclu_som.SOMocluInformer
     summarizerclass = somoclu_som.SOMocluSummarizer
-    _ = one_algo("SOMomoclu", inform_class, summarizerclass, summary_config_dict) 
+    _ = one_algo("SOMomoclu4", inform_class, summarizerclass, summary_config_dict) 
 
