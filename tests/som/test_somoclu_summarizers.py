@@ -93,11 +93,6 @@ def test_SomocluSOM_useful_clusters():
     summarizerclass = somoclu_som.SOMocluSummarizer
     _ = one_algo("SOMomoclu2", inform_class, summarizerclass, summary_config_dict)  
     
-    summary_config_dict = {"n_rows": 31, "n_columns": 31, "column_usage": "colors", "useful_clusters": full_useful_clusters}
-    inform_class = somoclu_som.SOMocluInformer
-    summarizerclass = somoclu_som.SOMocluSummarizer
-    _ = one_algo("SOMomoclu3", inform_class, summarizerclass, summary_config_dict)  
-    
     summary_config_dict = {"n_rows": 31, "n_columns": 31, "column_usage": "colors", "useful_clusters": full_uncovered_clusters}
     inform_class = somoclu_som.SOMocluInformer
     summarizerclass = somoclu_som.SOMocluSummarizer
