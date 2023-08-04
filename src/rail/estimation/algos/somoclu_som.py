@@ -524,10 +524,10 @@ class SOMocluSummarizer(SZPZSummarizer):
         covered_clusters = phot_cluster_set - uncovered_clusters
         if self.config.useful_clusters.size == 0:
             self.useful_clusters = covered_clusters
-        else:            
+        else:  # pragma: no cover        
             if set(self.config.useful_clusters) <= covered_clusters:
                 self.useful_clusters = self.config.useful_clusters
-            else:  # pragma: no cover
+            else:
                 print("Warning: input useful clusters is not a subset of spec-covered clusters."
                      +"Taking the intersection.")                
                 self.useful_clusters = np.intersect1d(self.config.useful_clusters, np.asarray(list(covered_clusters)))
