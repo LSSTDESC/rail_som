@@ -56,22 +56,22 @@ def one_algo(key, inform_class, summarizer_class, summary_kwargs):
     assert np.isclose(meanz[0], 0.14414913252122552, atol=0.025)
     
     full_useful_clusters = np.asarray(list(summarizer2.useful_clusters))
-    full_uncovered_clusters = np.setdiff1d(np.arange(31*31), full_useful_clusters)
+    full_uncovered_clusters = np.asarray(list(np.setdiff1d(np.arange(31*31), full_useful_clusters)))
     
     summary_config_dict = {"n_rows": 31, "n_columns": 31, "column_usage": "colors", "useful_clusters": np.arange(31*31)}
     inform_class = somoclu_som.SOMocluInformer
     summarizerclass = somoclu_som.SOMocluSummarizer
-    _ = one_algo("SOMomoclu", inform_class, summarizerclass, summary_config_dict)  
+    _ = one_algo("SOMomoclu1", inform_class, summarizerclass, summary_config_dict)  
     
     summary_config_dict = {"n_rows": 31, "n_columns": 31, "column_usage": "colors", "useful_clusters": full_useful_clusters}
     inform_class = somoclu_som.SOMocluInformer
     summarizerclass = somoclu_som.SOMocluSummarizer
-    _ = one_algo("SOMomoclu", inform_class, summarizerclass, summary_config_dict)  
+    _ = one_algo("SOMomoclu2", inform_class, summarizerclass, summary_config_dict)  
     
     summary_config_dict = {"n_rows": 31, "n_columns": 31, "column_usage": "colors", "useful_clusters": full_uncovered_clusters}
     inform_class = somoclu_som.SOMocluInformer
     summarizerclass = somoclu_som.SOMocluSummarizer
-    _ = one_algo("SOMomoclu", inform_class, summarizerclass, summary_config_dict) 
+    _ = one_algo("SOMomoclu3", inform_class, summarizerclass, summary_config_dict) 
     
     os.remove(summarizer2.get_output(summarizer2.get_aliased_tag("output"), final_name=True))
     os.remove(f"tmpsomoclu_" + key + ".pkl")
