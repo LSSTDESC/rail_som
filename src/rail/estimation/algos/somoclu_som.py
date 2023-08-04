@@ -531,7 +531,7 @@ class SOMocluSummarizer(SZPZSummarizer):
                 print("Warning: input useful clusters is not a subset of spec-covered clusters."
                      +"Taking the intersection.")                
                 self.useful_clusters = np.intersect1d(self.config.useful_clusters, np.asarray(list(covered_clusters)))
-                if self.useful_clusters.size == 0:
+                if self.useful_clusters.size == 0:  # pragma: no cover
                     raise ValueError("Input useful clusters have no intersection with spec-covered clusters!")
         
         useful_clusters = self.useful_clusters
