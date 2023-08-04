@@ -57,6 +57,36 @@ def one_algo(key, inform_class, summarizer_class, summary_kwargs):
     
     full_useful_clusters = np.asarray(list(summarizer2.useful_clusters))
     full_uncovered_clusters = np.asarray(list(np.setdiff1d(np.arange(31*31), full_useful_clusters)))
+        
+    os.remove(summarizer2.get_output(summarizer2.get_aliased_tag("output"), final_name=True))
+    os.remove(f"tmpsomoclu_" + key + ".pkl")
+    return summary_ens, full_useful_clusters, full_uncovered_clusters
+
+
+def test_SomocluSOM():
+    summary_config_dict = {"n_rows": 21, "n_columns": 21, "column_usage": "colors"}
+    inform_class = somoclu_som.SOMocluInformer
+    summarizerclass = somoclu_som.SOMocluSummarizer
+    _,_,_ = one_algo("SOMomoclu", inform_class, summarizerclass, summary_config_dict)
+
+
+def test_SomocluSOM_with_mag_and_colors():
+    summary_config_dict = {
+        "n_rows": 21,
+        "n_columns": 21,
+        "column_usage": "magandcolors",
+        "objid_name": "id",
+    }
+    inform_class = somoclu_som.SOMocluInformer
+    summarizerclass = somoclu_som.SOMocluSummarizer
+    _,_,_ = one_algo("SOMoclu_wmag", inform_class, summarizerclass, summary_config_dict)
+    
+
+def test_SomocluSOM_useful_clusters():
+    summary_config_dict = {"n_rows": 21, "n_columns": 21, "column_usage": "colors"}
+    inform_class = somoclu_som.SOMocluInformer
+    summarizerclass = somoclu_som.SOMocluSummarizer
+    _, full_useful_clusters, full_uncovered_clusters = one_algo("SOMomoclu", inform_class, summarizerclass, summary_config_dict)
     
     summary_config_dict = {"n_rows": 31, "n_columns": 31, "column_usage": "colors", "useful_clusters": np.arange(31*31)}
     inform_class = somoclu_som.SOMocluInformer
@@ -72,27 +102,4 @@ def one_algo(key, inform_class, summarizer_class, summary_kwargs):
     inform_class = somoclu_som.SOMocluInformer
     summarizerclass = somoclu_som.SOMocluSummarizer
     _ = one_algo("SOMomoclu3", inform_class, summarizerclass, summary_config_dict) 
-    
-    os.remove(summarizer2.get_output(summarizer2.get_aliased_tag("output"), final_name=True))
-    os.remove(f"tmpsomoclu_" + key + ".pkl")
-    return summary_ens
-
-
-def test_SomocluSOM():
-    summary_config_dict = {"n_rows": 21, "n_columns": 21, "column_usage": "colors"}
-    inform_class = somoclu_som.SOMocluInformer
-    summarizerclass = somoclu_som.SOMocluSummarizer
-    _ = one_algo("SOMomoclu", inform_class, summarizerclass, summary_config_dict)
-
-
-def test_SomocluSOM_with_mag_and_colors():
-    summary_config_dict = {
-        "n_rows": 21,
-        "n_columns": 21,
-        "column_usage": "magandcolors",
-        "objid_name": "id",
-    }
-    inform_class = somoclu_som.SOMocluInformer
-    summarizerclass = somoclu_som.SOMocluSummarizer
-    _ = one_algo("SOMoclu_wmag", inform_class, summarizerclass, summary_config_dict)
 
