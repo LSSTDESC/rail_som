@@ -530,7 +530,7 @@ class SOMocluSummarizer(SZPZSummarizer):
             else:
                 print("Warning: input useful clusters is not a subset of spec-covered clusters."
                      +"Taking the intersection.")                
-                self.useful_clusters = np.intersect1d(self.config.useful_clusters, covered_clusters)
+                self.useful_clusters = np.intersect1d(self.config.useful_clusters, np.asarray(list(covered_clusters)))
                 if self.useful_clusters.size == 0:
                     raise ValueError("Input useful clusters have no intersection with spec-covered clusters!")
         
@@ -538,7 +538,6 @@ class SOMocluSummarizer(SZPZSummarizer):
         
         tmp_neff_num = np.sum(test_data['weight'])
         tmp_neff_den = np.sum(test_data['weight'] ** 2)
-
 
         for i in range(self.config.nsamples):
             bootstrap_indices = bootstrap_matrix[:,i]
