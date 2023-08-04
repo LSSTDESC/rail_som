@@ -426,7 +426,7 @@ class SOMocluSummarizer(SZPZSummarizer):
         N_eff_p_num = np.zeros(self.config.nsamples)
         N_eff_p_den = np.zeros(self.config.nsamples)
         N_eff_num = 0.
-        N_eff_num = 0.
+        N_eff_den = 0.
         phot_cluster_set = set()
 
         # make dictionary of ID data to be written out with cell IDs
