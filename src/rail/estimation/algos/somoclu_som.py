@@ -365,6 +365,7 @@ class SOMocluSummarizer(SZPZSummarizer):
         return som_coords
 
     def run(self):
+        self.open_model(**self.config)        
         self.som = self.model['som']
         self.usecols = self.model['usecols']
         self.column_usage = self.model['column_usage']
