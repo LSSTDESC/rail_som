@@ -6,7 +6,7 @@ import qp
 from rail.core.data import TableHandle
 from rail.core.stage import RailStage
 from rail.core.utils import RAILDIR
-from rail.estimation.algos import somocluSOM
+from rail.estimation.algos import somoclu_som
 
 testszdata = os.path.join(RAILDIR, "rail/examples_data/testdata/training_100gal.hdf5")
 testphotdata = os.path.join(RAILDIR, "rail/examples_data/testdata/validation_10gal.hdf5")
@@ -61,8 +61,8 @@ def one_algo(key, inform_class, summarizer_class, summary_kwargs):
 
 def test_SomocluSOM():
     summary_config_dict = {"n_rows": 21, "n_columns": 21, "column_usage": "colors"}
-    inform_class = somocluSOM.Inform_somocluSOMSummarizer
-    summarizerclass = somocluSOM.somocluSOMSummarizer
+    inform_class = somoclu_som.SOMocluInformer
+    summarizerclass = somoclu_som.SOMocluSummarizer
     _ = one_algo("SOMomoclu", inform_class, summarizerclass, summary_config_dict)
 
 
@@ -73,6 +73,7 @@ def test_SomocluSOM_with_mag_and_colors():
         "column_usage": "magandcolors",
         "objid_name": "id",
     }
+<<<<<<< HEAD
     inform_class = somocluSOM.Inform_somocluSOMSummarizer
     summarizerclass = somocluSOM.somocluSOMSummarizer
     _ = one_algo("SOMoclu_wmagc", inform_class, summarizerclass, summary_config_dict)
@@ -97,6 +98,10 @@ def test_SomocluSOM_with_columns():
     }
     inform_class = somocluSOM.Inform_somocluSOMSummarizer
     summarizerclass = somocluSOM.somocluSOMSummarizer
+=======
+    inform_class = somoclu_som.SOMocluInformer
+    summarizerclass = somoclu_som.SOMocluSummarizer
+>>>>>>> 0a495f1cb7036115d905837557e20c7de3953125
     _ = one_algo("SOMoclu_wmag", inform_class, summarizerclass, summary_config_dict)
 
 def test_SomocluSOM_with_badinput():

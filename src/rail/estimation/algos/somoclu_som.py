@@ -130,7 +130,7 @@ def plot_som(ax, som_map, grid_type='rectangular', colormap=cm.viridis, cbar_nam
     ax.axis('off')
 
 
-class Inform_somocluSOMSummarizer(CatInformer):
+class SOMocluInformer(CatInformer):
     """Summarizer that uses a SOM to construct a weighted sum
     of spec-z objects in the same SOM cell as each photometric
     galaxy in order to estimate the overall N(z).  This is
@@ -176,7 +176,7 @@ class Inform_somocluSOMSummarizer(CatInformer):
       pickle file containing the `somoclu` SOM object that
     will be used by the estimation/summarization stage
     """
-    name = 'Inform_SOMoclu'
+    name = 'SOMocluInformer'
     config_options = CatInformer.config_options.copy()
     config_options.update(nondetect_val=SHARED_PARAMS,
                           mag_limits=SHARED_PARAMS,
@@ -240,7 +240,7 @@ class Inform_somocluSOMSummarizer(CatInformer):
         self.add_data('model', self.model)
 
 
-class somocluSOMSummarizer(SZPZSummarizer):
+class SOMocluSummarizer(SZPZSummarizer):
     """Quick implementation of a SOM-based summarizer. It will
     group a pre-trained SOM into hierarchical clusters and assign
     a galaxy sample into SOM cells and clusters. Then it
@@ -305,7 +305,7 @@ class somocluSOMSummarizer(SZPZSummarizer):
     qp_ens: qp Ensemble
       ensemble of bootstrap realizations of the estimated N(z) for the input photometric data
     """
-    name = 'somocluSOMSummarizer'
+    name = 'SOMocluSummarizer'
     config_options = SZPZSummarizer.config_options.copy()
     config_options.update(zmin=SHARED_PARAMS,
                           zmax=SHARED_PARAMS,
@@ -381,6 +381,7 @@ class somocluSOMSummarizer(SZPZSummarizer):
         return som_coords
 
     def run(self):
+        self.open_model(**self.config)        
         self.som = self.model['som']
         self.usecols = self.model['usecols']
         self.column_usage = self.model['column_usage']
@@ -441,6 +442,8 @@ class somocluSOMSummarizer(SZPZSummarizer):
         hist_vals = np.zeros((self.config.nsamples, len(self.zgrid) - 1))
         N_eff_p_num = np.zeros(self.config.nsamples)
         N_eff_p_den = np.zeros(self.config.nsamples)
+        N_eff_num = 0.
+        N_eff_den = 0.
         phot_cluster_set = set()
 
         # make dictionary of ID data to be written out with cell IDs
@@ -452,7 +455,9 @@ class somocluSOMSummarizer(SZPZSummarizer):
             print(f"Process {self.rank} running summarizer on chunk {s} - {e}")
 
             chunk_number = s//self.config.chunk_size
-            self._process_chunk(test_data, bootstrap_matrix, som_cluster_inds, spec_cluster_set, phot_cluster_set, sz, spec_data['weight'], spec_som_clusterind, N_eff_p_num, N_eff_p_den, hist_vals, id_dict, s, e, first)
+            tmp_neff_num, tmp_neff_den = self._process_chunk(test_data, bootstrap_matrix, som_cluster_inds, spec_cluster_set, phot_cluster_set, sz, spec_data['weight'], spec_som_clusterind, N_eff_p_num, N_eff_p_den, hist_vals, id_dict, s, e, first)
+            N_eff_num += tmp_neff_num
+            N_eff_den += tmp_neff_den
             first = False
 
         # We have finished writting the cell IDs, and we need to close the file in all process
@@ -467,6 +472,8 @@ class somocluSOMSummarizer(SZPZSummarizer):
             N_eff_p_num = self.comm.reduce(N_eff_p_num)
             N_eff_p_den = self.comm.reduce(N_eff_p_den)
             hist_vals = self.comm.reduce(hist_vals)
+            N_eff_num = self.comm.reduce(N_eff_num)
+            N_eff_den = self.comm.reduce(N_eff_den)
 
             phot_cluster_list=np.array(list(phot_cluster_set),dtype=int)
             phot_cluster_total=self.comm.gather(phot_cluster_list)
@@ -486,7 +493,7 @@ class somocluSOMSummarizer(SZPZSummarizer):
         # effective number defined in Heymans et al. (2012) to quantify the photometric representation.
         # also see Eq.7 in Wright et al. (2020).
         # Note that the origional definition should be effective number *density*, which equals to N_eff / Area.
-        N_eff = np.sum(N_eff_p_num)**2/np.sum(N_eff_p_den)
+        N_eff = N_eff_num**2 / N_eff_den
         N_eff_p_samples = N_eff_p_num**2/N_eff_p_den
         # the effective number density of the subsample of the photometric sample reside within SOM groupings which contain spectroscopy
         N_eff_p = np.mean(N_eff_p_samples)
@@ -530,6 +537,9 @@ class somocluSOMSummarizer(SZPZSummarizer):
         useful_clusters = chunk_phot_cluster_set.intersection(spec_cluster_set)
         phot_cluster_set.update(chunk_phot_cluster_set)
 
+        tmp_neff_num = np.sum(test_data['weight'])
+        tmp_neff_den = np.sum(test_data['weight'] ** 2)
+
 
         for i in range(self.config.nsamples):
             bootstrap_indices = bootstrap_matrix[:,i]
@@ -552,6 +562,8 @@ class somocluSOMSummarizer(SZPZSummarizer):
             N_eff_p_num[i] += tmp_n_eff_p_num
             N_eff_p_den[i] += tmp_n_eff_p_den
             hist_vals[i, :] += tmp_hist_vals
+
+        return (tmp_neff_num, tmp_neff_den)
 
     def _do_chunk_output(self, id_dict, start, end, first):
         if first:
