@@ -93,7 +93,7 @@ def test_SomocluSOM_with_columns():
     summary_config_dict = {
         "n_rows": 21,
         "n_columns": 21,
-4        "column_usage": "columns",
+        "column_usage": "columns",
         "objid_name": "id",
     }
     inform_class = somoclu_som.SOMocluInformer
