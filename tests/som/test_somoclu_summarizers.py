@@ -121,3 +121,13 @@ def test_SomocluSOM_useful_clusters():
     summarizerclass = somoclu_som.SOMocluSummarizer
     _ = one_algo("SOMomoclu4", inform_class, summarizerclass, summary_config_dict) 
 
+def test_SomocluSOM_wrong_column():
+    summary_config_dict = {
+        "n_rows": 21,
+        "n_columns": 21,
+        "column_usage": "wrong_column",
+        "objid_name": "id",
+    }
+    inform_class = somoclu_som.SOMocluInformer
+    summarizerclass = somoclu_som.SOMocluSummarizer
+    _ = one_algo("SOMoclu_wrongcolumn", inform_class, summarizerclass, summary_config_dict)
