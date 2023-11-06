@@ -77,6 +77,29 @@ def test_SomocluSOM_with_mag_and_colors():
         "column_usage": "magandcolors",
         "objid_name": "id",
     }
+
+    inform_class = somoclu_som.SOMocluInformer
+    summarizerclass = somoclu_som.SOMocluSummarizer
+    _ = one_algo("SOMoclu_wmagc", inform_class, summarizerclass, summary_config_dict)
+
+def test_SomocluSOM_with_colors():
+    summary_config_dict = {
+        "n_rows": 21,
+        "n_columns": 21,
+        "column_usage": "colors",
+        "objid_name": "id",
+    }
+    inform_class = somoclu_som.SOMocluInformer
+    summarizerclass = somoclu_som.SOMocluSummarizer
+    _ = one_algo("SOMoclu_wcolor", inform_class, summarizerclass, summary_config_dict)
+
+def test_SomocluSOM_with_columns():
+    summary_config_dict = {
+        "n_rows": 21,
+        "n_columns": 21,
+        "column_usage": "columns",
+        "objid_name": "id",
+    }
     inform_class = somoclu_som.SOMocluInformer
     summarizerclass = somoclu_som.SOMocluSummarizer
     _,_,_ = one_algo("SOMoclu_wmag", inform_class, summarizerclass, summary_config_dict)
