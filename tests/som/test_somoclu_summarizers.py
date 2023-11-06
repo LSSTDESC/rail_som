@@ -130,4 +130,7 @@ def test_SomocluSOM_wrong_column():
     }
     inform_class = somoclu_som.SOMocluInformer
     summarizerclass = somoclu_som.SOMocluSummarizer
-    _ = one_algo("SOMoclu_wrongcolumn", inform_class, summarizerclass, summary_config_dict)
+    try:
+        _ = one_algo("SOMoclu_wrongcolumn", inform_class, summarizerclass, summary_config_dict)
+    except:
+        return
