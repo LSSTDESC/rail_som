@@ -5,7 +5,7 @@ import qp
 
 from rail.core.data import TableHandle
 from rail.core.stage import RailStage
-from rail.core.common_params import RAILDIR
+from rail.utils.path_utils import RAILDIR
 from rail.estimation.algos import minisom_som
 
 testszdata = os.path.join(RAILDIR, "rail/examples_data/testdata/training_100gal.hdf5")
