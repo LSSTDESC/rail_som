@@ -54,16 +54,20 @@ def one_algo(key, inform_class, summarizer_class, summary_kwargs):
     fid_ens = qp.read(summarizer2.get_output(summarizer2.get_aliased_tag("single_NZ"), final_name=True))
     meanz = fid_ens.mean().flatten()
     assert np.isclose(meanz[0], 0.14414913252122552, atol=0.025)
+    
+    full_useful_clusters = np.asarray(list(summarizer2.useful_clusters))
+    full_uncovered_clusters = np.asarray(list(np.setdiff1d(np.arange(31*31), full_useful_clusters)))
+        
     os.remove(summarizer2.get_output(summarizer2.get_aliased_tag("output"), final_name=True))
     os.remove(f"tmpsomoclu_" + key + ".pkl")
-    return summary_ens
+    return summary_ens, full_useful_clusters, full_uncovered_clusters
 
 
 def test_SomocluSOM():
     summary_config_dict = {"n_rows": 21, "n_columns": 21, "column_usage": "colors"}
     inform_class = somoclu_som.SOMocluInformer
     summarizerclass = somoclu_som.SOMocluSummarizer
-    _ = one_algo("SOMomoclu", inform_class, summarizerclass, summary_config_dict)
+    _,_,_ = one_algo("SOMomoclu", inform_class, summarizerclass, summary_config_dict)
 
 
 def test_SomocluSOM_with_mag_and_colors():
@@ -98,19 +102,35 @@ def test_SomocluSOM_with_columns():
     }
     inform_class = somoclu_som.SOMocluInformer
     summarizerclass = somoclu_som.SOMocluSummarizer
+    _,_,_ = one_algo("SOMoclu_wmag", inform_class, summarizerclass, summary_config_dict)
+    
 
-    _ = one_algo("SOMoclu_wmag", inform_class, summarizerclass, summary_config_dict)
+def test_SomocluSOM_useful_clusters():
+    summary_config_dict = {"n_rows": 21, "n_columns": 21, "column_usage": "colors", "seed":0}
+    inform_class = somoclu_som.SOMocluInformer
+    summarizerclass = somoclu_som.SOMocluSummarizer
+    _, full_useful_clusters, full_uncovered_clusters = one_algo("SOMomoclu1", inform_class, summarizerclass, summary_config_dict)
+    
+    summary_config_dict = {"n_rows": 31, "n_columns": 31, "column_usage": "colors", "seed":0, "useful_clusters": np.arange(31*31)}
+    inform_class = somoclu_som.SOMocluInformer
+    summarizerclass = somoclu_som.SOMocluSummarizer
+    _ = one_algo("SOMomoclu2", inform_class, summarizerclass, summary_config_dict)  
+    
+    summary_config_dict = {"n_rows": 31, "n_columns": 31, "column_usage": "colors", "seed":0, "useful_clusters": full_uncovered_clusters}
+    inform_class = somoclu_som.SOMocluInformer
+    summarizerclass = somoclu_som.SOMocluSummarizer
+    _ = one_algo("SOMomoclu4", inform_class, summarizerclass, summary_config_dict) 
 
-def test_SomocluSOM_with_badinput():
+def test_SomocluSOM_wrong_column():
     summary_config_dict = {
         "n_rows": 21,
         "n_columns": 21,
-        "column_usage": "something",
+        "column_usage": "wrong_column",
         "objid_name": "id",
     }
     inform_class = somoclu_som.SOMocluInformer
     summarizerclass = somoclu_som.SOMocluSummarizer
     try:
-        one_algo("SOMoclu_wrong", inform_class, summarizerclass, summary_config_dict)
+        _ = one_algo("SOMoclu_wrongcolumn", inform_class, summarizerclass, summary_config_dict)
     except:
         return
