@@ -193,6 +193,10 @@ class SOMocluInformer(CatInformer):
                           gridtype=Param(str, 'rectangular', msg="Optional parameter to specify the grid form of the nodes:"
                                          + "* 'rectangular': rectangular neurons (default)"
                                          + "* 'hexagonal': hexagonal neurons"),
+                          n_epochs=Param(int, 10, msg="number of training epochs."),
+                          initialization=Param(str, 'pca', msg="method of initializing the SOM:"
+                                               +"* 'pca': principal componant analysis (default)"
+                                               +"* 'random' randomly initialize the SOM"),
                           maptype=Param(str, 'planar', msg="Optional parameter to specify the map topology:"
                                         + "* 'planar': Planar map (default)"
                                         + "* 'toroid': Toroid map"),
@@ -227,10 +231,10 @@ class SOMocluInformer(CatInformer):
                                       self.config.bands, self.config.column_usage)
 
         som = Somoclu(self.config.n_columns, self.config.n_rows,
-                      gridtype=self.config.gridtype,compactsupport=False,
-                      maptype=self.config.maptype, initialization='pca')
+                      gridtype=self.config.gridtype, compactsupport=False,
+                      maptype=self.config.maptype, initialization=self.config.initialization)
 
-        som.train(colors)
+        som.train(colors, epochs=self.config.n_epochs,)
 
         modeldict = dict(som=som, usecols=self.config.bands,
                          ref_column=self.config.ref_band,
