@@ -220,7 +220,7 @@ class SOMocluInformer(CatInformer):
             if np.isnan(self.config.nondetect_val):  # pragma: no cover
                 mask = np.isnan(training_data[col])
             else:
-                mask = np.isclose(training_data[col], self.config.nondetect_val)
+                mask = np.logical_or(np.isinf(training_data[col]), np.isclose(training_data[col], self.config.nondetect_val))
             training_data[col][mask] = self.config.mag_limits[col]
 
         colors = _computemagcolordata(training_data, self.config.ref_band,
