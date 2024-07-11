@@ -204,7 +204,7 @@ class SOMocluInformer(CatInformer):
     def __init__(self, args, **kwargs):
         """ Constructor:
         Do Informer specific initialization """
-        super().__init__(self, args, **kwargs)
+        super().__init__(args, **kwargs)
         self.model = None
 
     def run(self):
@@ -333,7 +333,7 @@ class SOMocluSummarizer(SZPZSummarizer):
         self.zgrid = None
         self.model = None
         self.usecols = None
-        super().__init__(self, args, **kwargs)
+        super().__init__(args, **kwargs)
         self.som = None
         self.column_usage = None
         self.ref_column_name = None
