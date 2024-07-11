@@ -89,10 +89,10 @@ class MiniSOMInformer(CatInformer):
                           som_learning_rate=Param(float, 0.5, msg="SOM learning rate"),
                           som_iterations=Param(int, 10_000, msg="number of iterations in SOM training"))
 
-    def __init__(self, args, comm=None):
+    def __init__(self, args, **kwargs):
         """ Constructor:
         Do Informer specific initialization """
-        CatInformer.__init__(self, args, comm=comm)
+        super().__init__(self, args, **kwargs)
         self.model = None
 
     def run(self):
@@ -212,11 +212,11 @@ class MiniSOMSummarizer(SZPZSummarizer):
                ('cellid_output', TableHandle),
                ('uncovered_cell_file', TableHandle)]
 
-    def __init__(self, args, comm=None):
+    def __init__(self, args, **kwargs):
         self.zgrid = None
         self.model = None
         self.usecols = None
-        SZPZSummarizer.__init__(self, args, comm=comm)
+        super().__init__(self, args, **kwargs)
         self.som = None
         self.column_usage = None
         self.ref_column_name = None

@@ -201,10 +201,10 @@ class SOMocluInformer(CatInformer):
                                           + "Default: 1.5"),
                           som_learning_rate=Param(float, 0.5, msg="Initial SOM learning rate (scale0 param in Somoclu)"))
 
-    def __init__(self, args, comm=None):
+    def __init__(self, args, **kwargs):
         """ Constructor:
         Do Informer specific initialization """
-        CatInformer.__init__(self, args, comm=comm)
+        super().__init__(self, args, **kwargs)
         self.model = None
 
     def run(self):
@@ -329,11 +329,11 @@ class SOMocluSummarizer(SZPZSummarizer):
                ('cellid_output', Hdf5Handle),
                ('uncovered_cluster_file', TableHandle)]
 
-    def __init__(self, args, comm=None):
+    def __init__(self, args, **kwargs):
         self.zgrid = None
         self.model = None
         self.usecols = None
-        SZPZSummarizer.__init__(self, args, comm=comm)
+        super().__init__(self, args, **kwargs)
         self.som = None
         self.column_usage = None
         self.ref_column_name = None
