@@ -492,7 +492,7 @@ class SOMocluSummarizer(SZPZSummarizer):
 
         # effective number defined in Heymans et al. (2012) to quantify the photometric representation.
         # also see Eq.7 in Wright et al. (2020).
-        # Note that the origional definition should be effective number *density*, which equals to N_eff / Area.
+        # Note that the origional definition should be effective number *density*, which equals to N_eff / Area. (Note that the area information has not been added yet)
         N_eff = N_eff_num**2 / N_eff_den
         N_eff_p_samples = N_eff_p_num**2/N_eff_p_den
         # the effective number density of the subsample of the photometric sample reside within SOM groupings which contain spectroscopy
@@ -508,6 +508,7 @@ class SOMocluSummarizer(SZPZSummarizer):
         self.add_data('output', sample_ens)
         self.add_data('single_NZ', qp_d)
         self.add_data('uncovered_cluster_file', bad_cluster)
+        self.add_data('neff_p_to_neff', self.neff_p_to_neff)
 
     def _process_chunk(self, test_data, bootstrap_matrix, som_cluster_inds, spec_cluster_set, phot_cluster_set, sz, sweight, spec_som_clusterind, N_eff_p_num, N_eff_p_den, hist_vals, id_dict, start, end, first):
 
