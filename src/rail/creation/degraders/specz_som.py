@@ -20,14 +20,30 @@ default_colorcol_nondet = [27.79, 29.04, 29.06, 28.62, 27.98, 27.05]
 
 
 class SOMSpeczDegrader(Selector):
-    """Class that creates a specz sample by training
-    a SOM on data with spec-z, classifying all galaxies
-    from a larger sample via the SOM, then selecting the
-    same number of galaxies in each SOM cell as there
-    are in the specz sample.  If fewer galaxies are
-    available in the large sample for a cell, it just
-    takes as many as possible, so you can still mismatch
-    the distribution numbers"""
+    """Class that creates a specz sample by training a SOM on data with spec-z,
+    classifying all galaxies from a larger sample via the SOM, then selecting
+    the same number of galaxies in each SOM cell as there are in the specz
+    sample.  If fewer galaxies are available in the large sample for a cell,
+    it just takes as many as possible, so you can still mismatch the
+    distribution numbers, i.e. if you have a lot of bright galaxies with
+    speczs from a really wide survey like SDSS and the second dataset does
+    not have the same areal coverage, then there may not be enough bright
+    objects in the second dataset to select, so you will end up with fewer.
+
+    For the columns used to construct the SOM, there are two sets of columns,
+    `noncolor_cols` is a config option where you supply a list of columns that
+    will be used directly in the SOM, e.g. redshift, i-magnitude, etc...
+    `color_cols`, on the other hand, is a config parameter where the user
+    supplies an ordered list of columns that will be differenced before being
+    used as SOM inputs, e.g. if you supply ['u', 'g','r'] then a function in
+    the code will compute u-g and g-r and use those in SOM construction.  The
+    code combines the noncolor_cols and color_cols features and all are used
+    in construction of the SOM.
+
+    As this degrader inherits from `Selector`, it simply computes a mask, the
+    Selector parent class code will perform the masking, and will return the
+    final dataset that mimics the input reference sample.
+    """
 
     name = "SOMSpeczDegrader"
     config_options = Selector.config_options.copy()
@@ -52,6 +68,7 @@ class SOMSpeczDegrader(Selector):
 
     def make_data_selection(self, df):
         """make the data to train the som or input to som"""
+        df = df.copy()
         usecols = self.config.noncolor_cols.copy()
         colcols = self.config.color_cols
         ncol = len(self.config.color_cols)
@@ -81,7 +98,7 @@ class SOMSpeczDegrader(Selector):
                 else:
                     mask = np.logical_or(np.isinf(data[val]), np.isclose(data[val], self.config.nondetect_val))
                 # data[val][mask] = lim
-                data.loc[mask, val] = lim
+                data.loc[mask, val] = np.float32(lim)
 
         specsomdata = self.make_data_selection(spec_data)
         photsomdata = self.make_data_selection(deep_data)
