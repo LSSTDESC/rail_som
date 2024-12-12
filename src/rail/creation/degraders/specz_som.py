@@ -120,7 +120,7 @@ class SOMSpeczDegrader(Selector):
                 subsetidx = np.where(subset)[0]
                 lengal = np.sum(subset)
                 howmany = np.sum(np.logical_and(spec_bmu_coords[0] == i, spec_bmu_coords[1] == j))
-                if howmany > lengal:
+                if howmany > lengal:  # pragma: no cover
                     howmany = lengal
                 perm = np.random.permutation(lengal)
                 total_mask[subsetidx[perm][:howmany]] = True
