@@ -4,9 +4,9 @@ import pandas as pd
 import pytest
 from rail.core.stage import RailStage
 from rail.core.data import DATA_STORE, PqHandle
-from rail.creation.degraders.specz_som import SOMSpeczDegrader
+from rail.creation.degraders.specz_som import SOMSpecSelector
 
-def test_SOMSpeczDegrader():
+def test_SOMSpecSelector():
     """test of the specz subset degrader"""
     nspec = 1000
     ninput = 10000
@@ -44,9 +44,9 @@ def test_SOMSpeczDegrader():
                     noncolor_nondet=noncol_nondet,
                     color_nondet=col_nondet)
 
-    som_degrade = SOMSpeczDegrader.make_stage(name="roman_som_degrader", 
-                                              output="test_degraded_som.pq", 
-                                              **som_dict)
+    som_degrade = SOMSpecSelector.make_stage(name="roman_som_degrader", 
+                                             output="test_degraded_som.pq", 
+                                             **som_dict)
     cutdf = som_degrade(input_data)
     for col in columns:
         assert col in cutdf().keys()

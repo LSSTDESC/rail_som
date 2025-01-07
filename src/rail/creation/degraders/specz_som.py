@@ -19,7 +19,7 @@ default_color_cols = ['u', 'g', 'r', 'i', 'z', 'y']
 default_colorcol_nondet = [27.79, 29.04, 29.06, 28.62, 27.98, 27.05]
 
 
-class SOMSpeczDegrader(Selector):
+class SOMSpecSelector(Selector):
     """Class that creates a specz sample by training a SOM on data with spec-z,
     classifying all galaxies from a larger sample via the SOM, then selecting
     the same number of galaxies in each SOM cell as there are in the specz
@@ -45,7 +45,7 @@ class SOMSpeczDegrader(Selector):
     final dataset that mimics the input reference sample.
     """
 
-    name = "SOMSpeczDegrader"
+    name = "SOMSpecSelector"
     config_options = Selector.config_options.copy()
     config_options.update(nondetect_val=SHARED_PARAMS,
                           noncolor_cols=Param(list, default_noncolor_cols, msg="data columns used for SOM, can be a single band if"
@@ -89,7 +89,6 @@ class SOMSpeczDegrader(Selector):
         check_vals = self.config.noncolor_cols + self.config.color_cols
         check_lims = self.config.noncolor_nondet + self.config.color_nondet
         for data in (spec_data, deep_data):
-            print("doing checks")
             for val, lim in zip(check_vals, check_lims):
                 if val not in data.keys():  # pragma: no cover
                     raise KeyError(f"required key {val} not present in input data file!")

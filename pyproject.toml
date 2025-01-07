@@ -17,6 +17,7 @@ classifiers = [
 dynamic = ["version"]
 dependencies = [
     "deprecated",
+    "pandas",
     "pz-rail-base>=1.0.3",
     "scikit-learn",
     "minisom",
