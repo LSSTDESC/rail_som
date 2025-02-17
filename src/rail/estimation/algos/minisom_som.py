@@ -67,10 +67,7 @@ class MiniSOMInformer(CatInformer):
     `nondetect_val` dictionary that will replace
     nondetections with the nondetect_val values!
 
-    Returns
-    -------
-    model: pickle file
-      pickle file containing the `minisom` SOM object that
+    This will make a pickle file containing the `minisom` SOM object that
     will be used by the estimation/summarization stage
     """
     name = 'MiniSOMInformer'
@@ -168,29 +165,6 @@ class MiniSOMSummarizer(SZPZSummarizer):
     Some iteration on data cuts may be necessary to
     remove/mitigate these 'uncovered' objects.
 
-    Parameters
-    ----------
-    zmin: float
-      min redshift for z grid
-    zmax: float
-      max redshift for z grid
-    nzbins: int
-      number of bins in z grid
-    hdf5_groupname: str
-      hdf5 group name for photometric data, set to "" if data is at top leve of hdf5 file
-    spec_groupname: str
-      hdf5 group name for spectroscopic data, set to "" if data is at top leve of hdf5 file
-    phot_weightcol: str
-      name of photometric weight column.  If no weights are to be used, set to ''
-    spec_weightcol: str
-      column name of the spectroscopic weight column.  If no weights are to be used, set to ''
-    nsamples: int
-      number of bootstrap spec-z samples to generate
-
-    Returns
-    -------
-    qp_ens: qp Ensemble
-      ensemble of bootstrap realizations of the estimated N(z) for the input photometric data
     """
     name = 'MiniSOMSummarizer'
     config_options = SZPZSummarizer.config_options.copy()
