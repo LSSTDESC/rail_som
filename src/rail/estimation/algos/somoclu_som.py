@@ -301,7 +301,7 @@ class SOMocluSummarizer(SZPZSummarizer):
                           spec_weightcol=Param(str, "", msg="name of specz weight col, if present"),
                           split=Param(int, 200, msg="the size of data chunks when calculating the distances between the codebook and data"),
                           nsamples=Param(int, 20, msg="number of bootstrap samples to generate"),
-                          useful_clusters=Param(np.ndarray, np.array([]), msg="the cluster indices that are used for calibration. If not given, then "
+                          useful_clusters=Param(list, [], msg="the cluster indices that are used for calibration. If not given, then "
                                                +"all the clusters containing spec sample are used."),)
     outputs = [('output', QPHandle),
                ('single_NZ', QPHandle),
@@ -516,15 +516,15 @@ class SOMocluSummarizer(SZPZSummarizer):
         print(uncovered_clusters)
         
         covered_clusters = phot_cluster_set - uncovered_clusters
-        if self.config.useful_clusters.size == 0:
+        if len(self.config.useful_clusters) == 0:
             self.useful_clusters = covered_clusters
         else:  # pragma: no cover        
             if set(self.config.useful_clusters) <= covered_clusters:
-                self.useful_clusters = self.config.useful_clusters
+                self.useful_clusters = np.array(self.config.useful_clusters)
             else:
                 print("Warning: input useful clusters is not a subset of spec-covered clusters."
                      +"Taking the intersection.")                
-                self.useful_clusters = np.intersect1d(self.config.useful_clusters, np.asarray(list(covered_clusters)))
+                self.useful_clusters = np.intersect1d(np.array(self.config.useful_clusters), np.asarray(list(covered_clusters)))
                 if self.useful_clusters.size == 0:  # pragma: no cover
                     raise ValueError("Input useful clusters have no intersection with spec-covered clusters!")
         
