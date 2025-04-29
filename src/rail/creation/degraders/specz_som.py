@@ -54,7 +54,7 @@ class SOMSpecSelector(Selector):
                           color_cols=Param(list, default_color_cols, msg="columns that will be differenced to make"
                                            " colors.  This will be done in order, so put in increasing WL order"),
                           color_nondet=Param(list, default_colorcol_nondet, msg="list of nondetect replacement vals for color columns"),
-                          som_size=Param(tuple, (32, 32), msg="tuple containing the size (x, y) of the SOM"),
+                          som_size=Param(list, [32, 32], msg="tuple containing the size (x, y) of the SOM"),
                           n_epochs=Param(int, 10, msg="number of training epochs."))
 
     inputs = [('spec_data', TableHandle),
