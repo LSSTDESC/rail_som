@@ -52,8 +52,8 @@ def one_algo(key, inform_class, summarizer_class, summary_kwargs):
     )
     _ = summarizer2.summarize(phot_data, spec_data)
     fid_ens = qp.read(summarizer2.get_output(summarizer2.get_aliased_tag("single_NZ"), final_name=True))
-    meanz = fid_ens.mean().flatten()
-    assert np.isclose(meanz[0], 0.14414913252122552, atol=0.025)
+    meanz = fid_ens.mean()  # .flatten()
+    assert np.isclose(meanz, 0.14414913252122552, atol=0.025)
     
     full_useful_clusters = np.asarray(list(summarizer2.useful_clusters))
     full_uncovered_clusters = np.asarray(list(np.setdiff1d(np.arange(31*31), full_useful_clusters)))
