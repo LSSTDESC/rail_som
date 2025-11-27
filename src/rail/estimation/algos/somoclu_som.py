@@ -1,25 +1,23 @@
+import matplotlib.pyplot as plt
 import numpy as np
-from somoclu import Somoclu
+import qp
+import sklearn.cluster as sc
 from ceci.config import StageParameter as Param
+from matplotlib import cm
+from matplotlib.patches import RegularPolygon
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from rail.core.common_params import SHARED_PARAMS
+from rail.core.data import Hdf5Handle, QPHandle, TableHandle
 from rail.estimation.estimator import CatInformer
 from rail.estimation.summarizer import SZPZSummarizer
-from rail.core.data import QPHandle, TableHandle, Hdf5Handle
-import qp
-
-import matplotlib.pyplot as plt
-from matplotlib.patches import RegularPolygon
-from matplotlib import cm
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-import sklearn.cluster as sc
 from scipy.spatial.distance import cdist
-from rail.core.common_params import SHARED_PARAMS
-
+from somoclu import Somoclu
 
 
 def _computemagcolordata(data, mag_column_name, column_names, colusage):
-    '''
+    """
     This function is used to construct a data array for SOM training.
-    Input: 
+    Input:
     data: a dictionary of data vectors that was read from a catalog;
     mag_column_name: a indicating the column name of magnitudes to directly used to train the SOM;
     column_names: a list of string indicating the column names of magnitudes to calculate colors (if colusage is 'colors' or 'magandcolors'), or directly used to train the SOM (if colusage is 'columns').
@@ -27,21 +25,23 @@ def _computemagcolordata(data, mag_column_name, column_names, colusage):
         'magandcolors': magnitude (from mag_column_name) and colors (calculated from column_names);
         'colors': colors calculated from column_names;
         'columns': columns indicated by column_names
-    '''
-    if colusage not in ['colors', 'magandcolors', 'columns']:
-        raise ValueError(f"column usage value {colusage} is not valid, valid values are 'colors', 'magandcolors', and 'columns'")
+    """
+    if colusage not in ["colors", "magandcolors", "columns"]:
+        raise ValueError(
+            f"column usage value {colusage} is not valid, valid values are 'colors', 'magandcolors', and 'columns'"
+        )
     numcols = len(column_names)
-    if colusage == 'magandcolors':
+    if colusage == "magandcolors":
         coldata = np.array(data[mag_column_name])
         for i in range(numcols - 1):
             tmpcolor = data[column_names[i]] - data[column_names[i + 1]]
             coldata = np.vstack((coldata, tmpcolor))
-    if colusage == 'colors':
+    if colusage == "colors":
         coldata = np.array(data[column_names[0]] - data[column_names[1]])
         for i in range(numcols - 2):
             tmpcolor = data[column_names[i + 1]] - data[column_names[i + 2]]
             coldata = np.vstack((coldata, tmpcolor))
-    if colusage == 'columns':
+    if colusage == "columns":
         coldata = np.array(data[column_names[0]])
         for i in range(numcols - 1):
             coldata = np.vstack((coldata, np.array(data[column_names[i + 1]])))
@@ -49,22 +49,23 @@ def _computemagcolordata(data, mag_column_name, column_names, colusage):
 
 
 def get_bmus(som, data, split=200):
-    '''
+    """
     This function gets the "best matching unit (bmu)" of a given data on a pre-trained SOM.
     It works by multiprocessing chunks of the data.
     Input:
     som: a pre-trained Somoclu object;
     data: np.ndarray of the data vector.
     split: an integer specifying the size of data chunks when calculating the distances between the codebook and data;
-    '''
+    """
     codebookReshaped = som.codebook.reshape(
-        som.codebook.shape[0] * som.codebook.shape[1], som.codebook.shape[2])
+        som.codebook.shape[0] * som.codebook.shape[1], som.codebook.shape[2]
+    )
     parts = np.array_split(data, split, axis=0)
     dmap = np.zeros((data.shape[0], som._n_columns * som._n_rows))
-    
+
     i = 0
     for part in parts:
-        dmap[i:i + part.shape[0]] = cdist((part), codebookReshaped, 'euclidean')
+        dmap[i : i + part.shape[0]] = cdist((part), codebookReshaped, "euclidean")
         i = i + part.shape[0]
 
     bmus = som.get_bmus(dmap)
@@ -73,9 +74,17 @@ def get_bmus(som, data, split=200):
 
 ###
 
-def plot_som(ax, som_map, grid_type='rectangular', colormap=cm.viridis, cbar_name=None,
-             vmin=None, vmax=None):  # pragma: no cover
-    '''
+
+def plot_som(
+    ax,
+    som_map,
+    grid_type="rectangular",
+    colormap=cm.viridis,
+    cbar_name=None,
+    vmin=None,
+    vmax=None,
+):  # pragma: no cover
+    """
     This function plots the pre-trained SOM.
     Input:
     ax: the axis to be plotted on.
@@ -84,16 +93,14 @@ def plot_som(ax, som_map, grid_type='rectangular', colormap=cm.viridis, cbar_nam
     grid_type: string, either 'rectangular' or 'hexagonal'.
     colormap: the colormap to show the values. default: cm.viridis.
     cbar_name: the label on the color bar.
-    '''
+    """
     if vmin == None and vmax == None:
         vmin = np.quantile(som_map[~np.isnan(som_map)], 0.01)
         vmax = np.quantile(som_map[~np.isnan(som_map)], 0.99)
     cscale = (som_map - vmin) / (vmax - vmin)
     som_dim = cscale.shape[0]
-    if grid_type == 'rectangular':
-        ax.matshow(som_map.T, cmap=colormap,
-                   vmin=vmin,
-                   vmax=vmax)
+    if grid_type == "rectangular":
+        ax.matshow(som_map.T, cmap=colormap, vmin=vmin, vmax=vmax)
     else:
         yy, xx = np.meshgrid(np.arange(som_dim), np.arange(som_dim))
         shift = np.zeros(som_dim)
@@ -103,22 +110,23 @@ def plot_som(ax, som_map, grid_type='rectangular', colormap=cm.viridis, cbar_nam
             for j in range(cscale.shape[1]):
                 wy = yy[(i, j)] * np.sqrt(3) / 2
                 if np.isnan(cscale[i, j]):
-                    color = 'k'
+                    color = "k"
                 else:
                     color = colormap(cscale[i, j])
 
-                hex = RegularPolygon((xx[(i, j)], wy),
-                                     numVertices=6,
-                                     radius=1 / np.sqrt(3),
-                                     facecolor=color,
-                                     edgecolor=color,
-                                     # alpha=.4,
-                                     lw=0.2,)
+                hex = RegularPolygon(
+                    (xx[(i, j)], wy),
+                    numVertices=6,
+                    radius=1 / np.sqrt(3),
+                    facecolor=color,
+                    edgecolor=color,
+                    # alpha=.4,
+                    lw=0.2,
+                )
                 ax.add_patch(hex)
 
-    scmap = plt.scatter([0, 0], [0, 0], s=0, c=[vmin, vmax],
-                        cmap=colormap)
-    ax.set_xlim(-1, som_dim - .5)
+    scmap = plt.scatter([0, 0], [0, 0], s=0, c=[vmin, vmax], cmap=colormap)
+    ax.set_xlim(-1, som_dim - 0.5)
     ax.set_ylim(-0.5, som_dim * np.sqrt(3) / 2)
 
     divider = make_axes_locatable(ax)
@@ -127,7 +135,7 @@ def plot_som(ax, som_map, grid_type='rectangular', colormap=cm.viridis, cbar_nam
     cb = plt.colorbar(scmap, cax=cax)
     cb.ax.tick_params(labelsize=15)
     cb.set_label(cbar_name, size=15)
-    ax.axis('off')
+    ax.axis("off")
 
 
 class SOMocluInformer(CatInformer):
@@ -173,38 +181,63 @@ class SOMocluInformer(CatInformer):
     This creates a pickle file containing the `somoclu` SOM object that
     will be used by the estimation/summarization stage
     """
-    name = 'SOMocluInformer'
+
+    name = "SOMocluInformer"
     config_options = CatInformer.config_options.copy()
-    config_options.update(nondetect_val=SHARED_PARAMS,
-                          mag_limits=SHARED_PARAMS,
-                          bands=SHARED_PARAMS,
-                          err_bands=SHARED_PARAMS,
-                          ref_band=SHARED_PARAMS,
-                          redshift_col=SHARED_PARAMS,
-                          hdf5_groupname=SHARED_PARAMS,
-                          column_usage=Param(str, "magandcolors", msg="switch for how SOM uses columns, valid values are "
-                                             + "'colors','magandcolors', and 'mags'"),
-                          seed=Param(int, 0, msg="Random number seed"),
-                          n_rows=Param(int, 31, msg="number of cells in SOM y dimension"),
-                          n_columns=Param(int, 31, msg="number of cells in SOM x dimension"),
-                          gridtype=Param(str, 'rectangular', msg="Optional parameter to specify the grid form of the nodes:"
-                                         + "* 'rectangular': rectangular neurons (default)"
-                                         + "* 'hexagonal': hexagonal neurons"),
-                          n_epochs=Param(int, 10, msg="number of training epochs."),
-                          initialization=Param(str, 'pca', msg="method of initializing the SOM:"
-                                               +"* 'pca': principal componant analysis (default)"
-                                               +"* 'random' randomly initialize the SOM"),
-                          maptype=Param(str, 'planar', msg="Optional parameter to specify the map topology:"
-                                        + "* 'planar': Planar map (default)"
-                                        + "* 'toroid': Toroid map"),
-                          std_coeff=Param(float, 1.5, msg="Optional parameter to set the coefficient in the Gaussian"
-                                          + "neighborhood function exp(-||x-y||^2/(2*(coeff*radius)^2))"
-                                          + "Default: 1.5"),
-                          som_learning_rate=Param(float, 0.5, msg="Initial SOM learning rate (scale0 param in Somoclu)"))
+    config_options.update(
+        nondetect_val=SHARED_PARAMS,
+        mag_limits=SHARED_PARAMS,
+        bands=SHARED_PARAMS,
+        err_bands=SHARED_PARAMS,
+        ref_band=SHARED_PARAMS,
+        redshift_col=SHARED_PARAMS,
+        hdf5_groupname=SHARED_PARAMS,
+        column_usage=Param(
+            str,
+            "magandcolors",
+            msg="switch for how SOM uses columns, valid values are "
+            + "'colors','magandcolors', and 'mags'",
+        ),
+        seed=Param(int, 0, msg="Random number seed"),
+        n_rows=Param(int, 31, msg="number of cells in SOM y dimension"),
+        n_columns=Param(int, 31, msg="number of cells in SOM x dimension"),
+        gridtype=Param(
+            str,
+            "rectangular",
+            msg="Optional parameter to specify the grid form of the nodes:"
+            + "* 'rectangular': rectangular neurons (default)"
+            + "* 'hexagonal': hexagonal neurons",
+        ),
+        n_epochs=Param(int, 10, msg="number of training epochs."),
+        initialization=Param(
+            str,
+            "pca",
+            msg="method of initializing the SOM:"
+            + "* 'pca': principal componant analysis (default)"
+            + "* 'random' randomly initialize the SOM",
+        ),
+        maptype=Param(
+            str,
+            "planar",
+            msg="Optional parameter to specify the map topology:"
+            + "* 'planar': Planar map (default)"
+            + "* 'toroid': Toroid map",
+        ),
+        std_coeff=Param(
+            float,
+            1.5,
+            msg="Optional parameter to set the coefficient in the Gaussian"
+            + "neighborhood function exp(-||x-y||^2/(2*(coeff*radius)^2))"
+            + "Default: 1.5",
+        ),
+        som_learning_rate=Param(
+            float, 0.5, msg="Initial SOM learning rate (scale0 param in Somoclu)"
+        ),
+    )
 
     def __init__(self, args, **kwargs):
-        """ Constructor:
-        Do Informer specific initialization """
+        """Constructor:
+        Do Informer specific initialization"""
         super().__init__(args, **kwargs)
         self.model = None
 
@@ -213,32 +246,51 @@ class SOMocluInformer(CatInformer):
         **NOT** spectroscopic data!
         """
         if self.config.hdf5_groupname:
-            training_data = self.get_data('input')[self.config.hdf5_groupname]
+            training_data = self.get_data("input")[self.config.hdf5_groupname]
         else:  # pragma: no cover
-            training_data = self.get_data('input')
+            training_data = self.get_data("input")
         # replace nondetects
         for col in self.config.bands:
             if np.isnan(self.config.nondetect_val):  # pragma: no cover
                 mask = np.isnan(training_data[col])
             else:
-                mask = np.logical_or(np.isinf(training_data[col]), np.isclose(training_data[col], self.config.nondetect_val))
+                mask = np.logical_or(
+                    np.isinf(training_data[col]),
+                    np.isclose(training_data[col], self.config.nondetect_val),
+                )
             training_data[col][mask] = self.config.mag_limits[col]
 
-        colors = _computemagcolordata(training_data, self.config.ref_band,
-                                      self.config.bands, self.config.column_usage)
+        colors = _computemagcolordata(
+            training_data,
+            self.config.ref_band,
+            self.config.bands,
+            self.config.column_usage,
+        )
 
-        som = Somoclu(self.config.n_columns, self.config.n_rows,
-                      gridtype=self.config.gridtype, compactsupport=False,
-                      maptype=self.config.maptype, initialization=self.config.initialization)
+        som = Somoclu(
+            self.config.n_columns,
+            self.config.n_rows,
+            gridtype=self.config.gridtype,
+            compactsupport=False,
+            maptype=self.config.maptype,
+            initialization=self.config.initialization,
+        )
 
-        som.train(colors, epochs=self.config.n_epochs,)
+        som.train(
+            colors,
+            epochs=self.config.n_epochs,
+        )
 
-        modeldict = dict(som=som, usecols=self.config.bands,
-                         ref_column=self.config.ref_band,
-                         n_rows=self.config.n_rows, n_columns=self.config.n_columns,
-                         column_usage=self.config.column_usage)
+        modeldict = dict(
+            som=som,
+            usecols=self.config.bands,
+            ref_column=self.config.ref_band,
+            n_rows=self.config.n_rows,
+            n_columns=self.config.n_columns,
+            column_usage=self.config.column_usage,
+        )
         self.model = modeldict
-        self.add_data('model', self.model)
+        self.add_data("model", self.model)
 
 
 class SOMocluSummarizer(SZPZSummarizer):
@@ -282,31 +334,56 @@ class SOMocluSummarizer(SZPZSummarizer):
     remove/mitigate these 'uncovered' objects.
 
     """
-    name = 'SOMocluSummarizer'
+
+    name = "SOMocluSummarizer"
     config_options = SZPZSummarizer.config_options.copy()
-    config_options.update(zmin=SHARED_PARAMS,
-                          zmax=SHARED_PARAMS,
-                          nzbins=SHARED_PARAMS,
-                          nondetect_val=SHARED_PARAMS,
-                          mag_limits=SHARED_PARAMS,
-                          hdf5_groupname=SHARED_PARAMS,
-                          redshift_col=SHARED_PARAMS,
-                          spec_groupname=Param(str, "photometry", msg="name of hdf5 group for spec data, if None, then set to ''"),
-                          n_clusters=Param(int, -1, msg="The number of hierarchical clusters of SOM cells. If not provided, the "
-                                           + "SOM cells will not be clustered."),
-                          objid_name=Param(str, "", "name of ID column, if present will be written to cellid_output"),
-                          seed=Param(int, 12345, msg="random seed"),
-                          redshift_colname=Param(str, "redshift", msg="name of redshift column in specz file"),
-                          phot_weightcol=Param(str, "", msg="name of photometry weight, if present"),
-                          spec_weightcol=Param(str, "", msg="name of specz weight col, if present"),
-                          split=Param(int, 200, msg="the size of data chunks when calculating the distances between the codebook and data"),
-                          nsamples=Param(int, 20, msg="number of bootstrap samples to generate"),
-                          useful_clusters=Param(list, [], msg="the cluster indices that are used for calibration. If not given, then "
-                                               +"all the clusters containing spec sample are used."),)
-    outputs = [('output', QPHandle),
-               ('single_NZ', QPHandle),
-               ('cellid_output', Hdf5Handle),
-               ('uncovered_cluster_file', TableHandle)]
+    config_options.update(
+        zmin=SHARED_PARAMS,
+        zmax=SHARED_PARAMS,
+        nzbins=SHARED_PARAMS,
+        nondetect_val=SHARED_PARAMS,
+        mag_limits=SHARED_PARAMS,
+        hdf5_groupname=SHARED_PARAMS,
+        redshift_col=SHARED_PARAMS,
+        spec_groupname=Param(
+            str,
+            "photometry",
+            msg="name of hdf5 group for spec data, if None, then set to ''",
+        ),
+        n_clusters=Param(
+            int,
+            -1,
+            msg="The number of hierarchical clusters of SOM cells. If not provided, the "
+            + "SOM cells will not be clustered.",
+        ),
+        objid_name=Param(
+            str, "", "name of ID column, if present will be written to cellid_output"
+        ),
+        seed=Param(int, 12345, msg="random seed"),
+        redshift_colname=Param(
+            str, "redshift", msg="name of redshift column in specz file"
+        ),
+        phot_weightcol=Param(str, "", msg="name of photometry weight, if present"),
+        spec_weightcol=Param(str, "", msg="name of specz weight col, if present"),
+        split=Param(
+            int,
+            200,
+            msg="the size of data chunks when calculating the distances between the codebook and data",
+        ),
+        nsamples=Param(int, 20, msg="number of bootstrap samples to generate"),
+        useful_clusters=Param(
+            list,
+            [],
+            msg="the cluster indices that are used for calibration. If not given, then "
+            + "all the clusters containing spec sample are used.",
+        ),
+    )
+    outputs = [
+        ("output", QPHandle),
+        ("single_NZ", QPHandle),
+        ("cellid_output", Hdf5Handle),
+        ("uncovered_cluster_file", TableHandle),
+    ]
 
     def __init__(self, args, **kwargs):
         self.zgrid = None
@@ -320,9 +397,9 @@ class SOMocluSummarizer(SZPZSummarizer):
         self.n_columns = None
 
     def replace_non_detections(self, data):
-        '''
+        """
         Replace non-detected data with magnitude limits.
-        '''
+        """
         for col in self.usecols:
             if np.isnan(self.config.nondetect_val):  # pragma: no cover
                 mask = np.isnan(data[col])
@@ -331,10 +408,10 @@ class SOMocluSummarizer(SZPZSummarizer):
             data[col][mask] = self.config.mag_limits[col]
 
     def set_weight_column(self, data, weight_col):
-        '''
+        """
         Assign weight vecs if present, else set all to 1.0.
         weight_col: column name of weights.
-        '''
+        """
         if weight_col == "":
             data["weight"] = np.ones(len(data[self.usecols[0]]))
         elif weight_col in data.keys():  # pragma: no cover
@@ -344,57 +421,74 @@ class SOMocluSummarizer(SZPZSummarizer):
             raise KeyError(f"Weight column {weight_col} not present in data!")
 
     def get_som_coordinates(self, data, weight_col):
-        '''
+        """
         Find the bmus coordinate of each item in the data.
-        '''
+        """
         # replace nondetects
         self.replace_non_detections(data)
         self.set_weight_column(data, weight_col)
 
         # find the best cells for this data set
-        test_data = _computemagcolordata(data, self.ref_column_name,
-                                           self.usecols, self.column_usage)
+        test_data = _computemagcolordata(
+            data, self.ref_column_name, self.usecols, self.column_usage
+        )
 
         som_coords = get_bmus(self.som, test_data, self.config.split).T
 
         return som_coords
 
     def run(self):
-        self.open_model(**self.config)        
-        self.som = self.model['som']
-        self.usecols = self.model['usecols']
-        self.column_usage = self.model['column_usage']
-        self.ref_column_name = self.model['ref_column']
-        self.n_rows = self.model['n_rows']
-        self.n_columns = self.model['n_columns']
+        self.open_model(**self.config)
+        self.som = self.model["som"]
+        self.usecols = self.model["usecols"]
+        self.column_usage = self.model["column_usage"]
+        self.ref_column_name = self.model["ref_column"]
+        self.n_rows = self.model["n_rows"]
+        self.n_columns = self.model["n_columns"]
         rng = np.random.default_rng(seed=self.config.seed)
 
         if self.config.spec_groupname:
-            spec_data = self.get_data('spec_input')[self.config.spec_groupname]
+            spec_data = self.get_data("spec_input")[self.config.spec_groupname]
         else:  # pragma: no cover
-            spec_data = self.get_data('spec_input')
+            spec_data = self.get_data("spec_input")
         if self.config.redshift_col not in spec_data.keys():  # pragma: no cover
-            raise ValueError(f"redshift column {self.config.redshift_col} not found in spec_data")
+            raise ValueError(
+                f"redshift column {self.config.redshift_col} not found in spec_data"
+            )
         sz = spec_data[self.config.redshift_colname]
 
-        self.zgrid = np.linspace(self.config.zmin, self.config.zmax, self.config.nzbins + 1)
+        self.zgrid = np.linspace(
+            self.config.zmin, self.config.zmax, self.config.nzbins + 1
+        )
 
         if self.config.n_clusters > self.n_rows * self.n_columns:  # pragma: no cover
-            print("Warning: number of clusters cannot be greater than the number of cells ("+str(self.n_rows * self.n_columns)+"). The SOM will NOT be grouped into clusters.")
+            print(
+                "Warning: number of clusters cannot be greater than the number of cells ("
+                + str(self.n_rows * self.n_columns)
+                + "). The SOM will NOT be grouped into clusters."
+            )
             n_clusters = self.n_rows * self.n_columns
         elif self.config.n_clusters == -1:
-            print("Warning: number of clusters is not provided. The SOM will NOT be grouped into clusters.")
+            print(
+                "Warning: number of clusters is not provided. The SOM will NOT be grouped into clusters."
+            )
             n_clusters = self.n_rows * self.n_columns
         else:  # pragma: no cover
             n_clusters = self.config.n_clusters
 
-        algorithm = sc.AgglomerativeClustering(n_clusters=n_clusters, linkage='complete')
+        algorithm = sc.AgglomerativeClustering(
+            n_clusters=n_clusters, linkage="complete"
+        )
         self.som.cluster(algorithm)
         som_cluster_inds = self.som.clusters.reshape(-1)
 
-        #First we process the spectroscopic part
-        spec_som_coords = self.get_som_coordinates(spec_data, self.config.spec_weightcol)
-        spec_pixel_coords = np.ravel_multi_index(spec_som_coords, (self.n_columns, self.n_rows))
+        # First we process the spectroscopic part
+        spec_som_coords = self.get_som_coordinates(
+            spec_data, self.config.spec_weightcol
+        )
+        spec_pixel_coords = np.ravel_multi_index(
+            spec_som_coords, (self.n_columns, self.n_rows)
+        )
         spec_som_clusterind = som_cluster_inds[spec_pixel_coords]
 
         ngal = len(spec_pixel_coords)
@@ -404,24 +498,24 @@ class SOMocluSummarizer(SZPZSummarizer):
         # if we are running in parallel
         nsamp = self.config.nsamples
         if self.rank == 0:
-            bootstrap_matrix = rng.integers(low=0, high=ngal, size=(ngal,nsamp))
+            bootstrap_matrix = rng.integers(low=0, high=ngal, size=(ngal, nsamp))
         else:  # pragma: no cover
             bootstrap_matrix = None
 
         if self.comm is not None:  # pragma: no cover
-            bootstrap_matrix = self.comm.bcast(bootstrap_matrix, root = 0)
+            bootstrap_matrix = self.comm.bcast(bootstrap_matrix, root=0)
 
         # Starting the iterator
-        iterator = self.input_iterator('input')
+        iterator = self.input_iterator("input")
         first = True
-        total_chunks = int(np.ceil(self._input_length/self.config.chunk_size))
+        total_chunks = int(np.ceil(self._input_length / self.config.chunk_size))
 
         # Initializing variables that will be used after the chunks
         hist_vals = np.zeros((self.config.nsamples, len(self.zgrid) - 1))
         N_eff_p_num = np.zeros(self.config.nsamples)
         N_eff_p_den = np.zeros(self.config.nsamples)
-        N_eff_num = 0.
-        N_eff_den = 0.
+        N_eff_num = 0.0
+        N_eff_den = 0.0
         phot_cluster_set = set()
         bad_clusters = set()
         # make dictionary of ID data to be written out with cell IDs
@@ -432,8 +526,25 @@ class SOMocluSummarizer(SZPZSummarizer):
         for s, e, test_data in iterator:
             print(f"Process {self.rank} running summarizer on chunk {s} - {e}")
 
-            chunk_number = s//self.config.chunk_size
-            tmp_neff_num, tmp_neff_den = self._process_chunk(test_data, bootstrap_matrix, som_cluster_inds, spec_cluster_set, phot_cluster_set, sz, spec_data['weight'], spec_som_clusterind, N_eff_p_num, N_eff_p_den, hist_vals, id_dict, s, e, first, bad_clusters)
+            chunk_number = s // self.config.chunk_size
+            tmp_neff_num, tmp_neff_den = self._process_chunk(
+                test_data,
+                bootstrap_matrix,
+                som_cluster_inds,
+                spec_cluster_set,
+                phot_cluster_set,
+                sz,
+                spec_data["weight"],
+                spec_som_clusterind,
+                N_eff_p_num,
+                N_eff_p_den,
+                hist_vals,
+                id_dict,
+                s,
+                e,
+                first,
+                bad_clusters,
+            )
             N_eff_num += tmp_neff_num
             N_eff_den += tmp_neff_den
             first = False
@@ -445,6 +556,7 @@ class SOMocluSummarizer(SZPZSummarizer):
         # the results from all the processes
         if self.comm is not None:  # pragma: no cover
             import mpi4py.MPI
+
             # get the total photometric weight and count in each
             # pixel across all processes and chunks of data
             N_eff_p_num = self.comm.reduce(N_eff_p_num)
@@ -453,23 +565,23 @@ class SOMocluSummarizer(SZPZSummarizer):
             N_eff_num = self.comm.reduce(N_eff_num)
             N_eff_den = self.comm.reduce(N_eff_den)
             bad_clusters = self.comm.reduce(bad_clusters)
-            
-            phot_cluster_list=np.array(list(phot_cluster_set),dtype=int)
-            phot_cluster_total=self.comm.gather(phot_cluster_list)
-            
+
+            phot_cluster_list = np.array(list(phot_cluster_set), dtype=int)
+            phot_cluster_total = self.comm.gather(phot_cluster_list)
+
             # Only process 0 does the rest of this
             if self.rank != 0:
                 return
-            phot_cluster_total=np.concatenate(phot_cluster_total)
+            phot_cluster_total = np.concatenate(phot_cluster_total)
             phot_cluster_set = set(phot_cluster_total)
-                    
+
         print(f"{len(self.useful_clusters)} out of {n_clusters} have usable data")
 
         # effective number defined in Heymans et al. (2012) to quantify the photometric representation.
         # also see Eq.7 in Wright et al. (2020).
         # Note that the origional definition should be effective number *density*, which equals to N_eff / Area.
         N_eff = N_eff_num**2 / N_eff_den
-        N_eff_p_samples = N_eff_p_num**2/N_eff_p_den
+        N_eff_p_samples = N_eff_p_num**2 / N_eff_p_den
         # the effective number density of the subsample of the photometric sample reside within SOM groupings which contain spectroscopy
         N_eff_p = np.mean(N_eff_p_samples)
 
@@ -477,14 +589,34 @@ class SOMocluSummarizer(SZPZSummarizer):
         # We use this to evaluate the spectroscopic representation of current SOM setup and calibrating spectroscopic catalog.
         self.neff_p_to_neff = N_eff_p / N_eff
 
-        sample_ens = qp.Ensemble(qp.hist, data=dict(bins=self.zgrid, pdfs=np.atleast_2d(hist_vals)))
+        sample_ens = qp.Ensemble(
+            qp.hist, data=dict(bins=self.zgrid, pdfs=np.atleast_2d(hist_vals))
+        )
         fid_hist = np.mean(hist_vals, axis=0)
         qp_d = qp.Ensemble(qp.hist, data=dict(bins=self.zgrid, pdfs=fid_hist))
-        self.add_data('output', sample_ens)
-        self.add_data('single_NZ', qp_d)
-        self.add_data('uncovered_cluster_file', bad_clusters)
+        self.add_data("output", sample_ens)
+        self.add_data("single_NZ", qp_d)
+        self.add_data("uncovered_cluster_file", bad_clusters)
 
-    def _process_chunk(self, test_data, bootstrap_matrix, som_cluster_inds, spec_cluster_set, phot_cluster_set, sz, sweight, spec_som_clusterind, N_eff_p_num, N_eff_p_den, hist_vals, id_dict, start, end, first, bad_clusters):
+    def _process_chunk(
+        self,
+        test_data,
+        bootstrap_matrix,
+        som_cluster_inds,
+        spec_cluster_set,
+        phot_cluster_set,
+        sz,
+        sweight,
+        spec_som_clusterind,
+        N_eff_p_num,
+        N_eff_p_den,
+        hist_vals,
+        id_dict,
+        start,
+        end,
+        first,
+        bad_clusters,
+    ):
 
         for col in self.usecols:
             if col not in test_data.keys():  # pragma: no cover
@@ -494,17 +626,21 @@ class SOMocluSummarizer(SZPZSummarizer):
             if self.config.objid_name in test_data.keys():
                 id_dict[self.config.objid_name] = test_data[self.config.objid_name]
 
-        phot_som_coords = self.get_som_coordinates(test_data, self.config.phot_weightcol)
-        phot_pixel_coords = np.ravel_multi_index(phot_som_coords, (self.n_columns, self.n_rows))
+        phot_som_coords = self.get_som_coordinates(
+            test_data, self.config.phot_weightcol
+        )
+        phot_pixel_coords = np.ravel_multi_index(
+            phot_som_coords, (self.n_columns, self.n_rows)
+        )
         phot_som_clusterind = som_cluster_inds[phot_pixel_coords]
 
         # add id coords to id_dict for writeout
         xcoord, ycoord = phot_som_coords
-        id_dict['coord0'] = xcoord
-        id_dict['coord1'] = ycoord
-        id_dict['ravel_coord'] = phot_pixel_coords
-        id_dict['cluster_ind'] = phot_som_clusterind
-        id_dict['cell_ravel_ind'] = phot_pixel_coords
+        id_dict["coord0"] = xcoord
+        id_dict["coord1"] = ycoord
+        id_dict["ravel_coord"] = phot_pixel_coords
+        id_dict["cluster_ind"] = phot_som_clusterind
+        id_dict["cell_ravel_ind"] = phot_pixel_coords
         # We write  the cellID's file chunk by chunk as it is very large.
         self._do_chunk_output(id_dict, start, end, first)
 
@@ -512,29 +648,38 @@ class SOMocluSummarizer(SZPZSummarizer):
         phot_cluster_set.update(chunk_phot_cluster_set)
         uncovered_clusters = phot_cluster_set - spec_cluster_set
         bad_cluster = dict(uncovered_clusters=np.array(list(uncovered_clusters)))
-        print("the following clusters contain photometric data but not spectroscopic data:")
+        print(
+            "the following clusters contain photometric data but not spectroscopic data:"
+        )
         print(uncovered_clusters)
-        
+
         covered_clusters = phot_cluster_set - uncovered_clusters
         if len(self.config.useful_clusters) == 0:
             self.useful_clusters = covered_clusters
-        else:  # pragma: no cover        
+        else:  # pragma: no cover
             if set(self.config.useful_clusters) <= covered_clusters:
                 self.useful_clusters = np.array(self.config.useful_clusters)
             else:
-                print("Warning: input useful clusters is not a subset of spec-covered clusters."
-                     +"Taking the intersection.")                
-                self.useful_clusters = np.intersect1d(np.array(self.config.useful_clusters), np.asarray(list(covered_clusters)))
+                print(
+                    "Warning: input useful clusters is not a subset of spec-covered clusters."
+                    + "Taking the intersection."
+                )
+                self.useful_clusters = np.intersect1d(
+                    np.array(self.config.useful_clusters),
+                    np.asarray(list(covered_clusters)),
+                )
                 if self.useful_clusters.size == 0:  # pragma: no cover
-                    raise ValueError("Input useful clusters have no intersection with spec-covered clusters!")
-        
+                    raise ValueError(
+                        "Input useful clusters have no intersection with spec-covered clusters!"
+                    )
+
         useful_clusters = self.useful_clusters
-        
-        tmp_neff_num = np.sum(test_data['weight'])
-        tmp_neff_den = np.sum(test_data['weight'] ** 2)
+
+        tmp_neff_num = np.sum(test_data["weight"])
+        tmp_neff_den = np.sum(test_data["weight"] ** 2)
 
         for i in range(self.config.nsamples):
-            bootstrap_indices = bootstrap_matrix[:,i]
+            bootstrap_indices = bootstrap_matrix[:, i]
             bs_specz = sz[bootstrap_indices]
             bs_weights = sweight[bootstrap_indices]
             bs_specz_clusters = spec_som_clusterind[bootstrap_indices]
@@ -542,15 +687,17 @@ class SOMocluSummarizer(SZPZSummarizer):
             tmp_n_eff_p_num = 0
             tmp_n_eff_p_den = 0
             for cluster in useful_clusters:
-                pmask = (phot_som_clusterind == cluster)
-                pweight=test_data['weight'][pmask]
+                pmask = phot_som_clusterind == cluster
+                pweight = test_data["weight"][pmask]
                 binpweight = np.sum(pweight)
-                smask = (bs_specz_clusters == cluster)
-                cluster_hist_vals, _ = np.histogram(bs_specz[smask], bins=self.zgrid, weights=bs_weights[smask])
+                smask = bs_specz_clusters == cluster
+                cluster_hist_vals, _ = np.histogram(
+                    bs_specz[smask], bins=self.zgrid, weights=bs_weights[smask]
+                )
                 tmp_hist_vals += cluster_hist_vals * binpweight
 
                 tmp_n_eff_p_num += np.sum(pweight)
-                tmp_n_eff_p_den += np.sum(pweight ** 2)
+                tmp_n_eff_p_den += np.sum(pweight**2)
             N_eff_p_num[i] += tmp_n_eff_p_num
             N_eff_p_den[i] += tmp_n_eff_p_den
             hist_vals[i, :] += tmp_hist_vals
@@ -559,8 +706,9 @@ class SOMocluSummarizer(SZPZSummarizer):
 
     def _do_chunk_output(self, id_dict, start, end, first):
         if first:
-            self._cellid_handle = self.add_handle('cellid_output', data = id_dict)
-            self._cellid_handle.initialize_write(self._input_length, communicator = self.comm)
+            self._cellid_handle = self.add_handle("cellid_output", data=id_dict)
+            self._cellid_handle.initialize_write(
+                self._input_length, communicator=self.comm
+            )
         self._cellid_handle.set_data(id_dict, partial=True)
         self._cellid_handle.write_chunk(start, end)
-

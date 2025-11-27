@@ -1,30 +1,30 @@
 import numpy as np
-from minisom import MiniSom
+import qp
 from ceci.config import StageParameter as Param
+from minisom import MiniSom
+from rail.core.common_params import SHARED_PARAMS
+from rail.core.data import QPHandle, TableHandle
 from rail.estimation.estimator import CatInformer
 from rail.estimation.summarizer import SZPZSummarizer
-from rail.core.data import QPHandle, TableHandle
-from rail.core.common_params import SHARED_PARAMS
-
-import qp
-
 
 
 def _computemagcolordata(data, ref_column_name, column_names, colusage):
-    if colusage not in ['colors', 'magandcolors', 'columns']:  # pragma: no cover
-        raise ValueError(f"column usage value {colusage} is not valid, valid values are 'colors', 'magandcolors', and 'columns'")
+    if colusage not in ["colors", "magandcolors", "columns"]:  # pragma: no cover
+        raise ValueError(
+            f"column usage value {colusage} is not valid, valid values are 'colors', 'magandcolors', and 'columns'"
+        )
     numcols = len(column_names)
-    if colusage == 'magandcolors':
+    if colusage == "magandcolors":
         coldata = np.array(data[ref_column_name])
         for i in range(numcols - 1):
             tmpcolor = data[column_names[i]] - data[column_names[i + 1]]
             coldata = np.vstack((coldata, tmpcolor))
-    if colusage == 'colors':
+    if colusage == "colors":
         coldata = np.array(data[column_names[0]] - data[column_names[1]])
         for i in range(numcols - 2):
             tmpcolor = data[column_names[i + 1]] - data[column_names[i + 2]]
             coldata = np.vstack((coldata, tmpcolor))
-    if colusage == 'columns':  # pragma: no cover
+    if colusage == "columns":  # pragma: no cover
         coldata = np.array(data[column_names[0]])
         for i in range(numcols - 1):
             coldata = np.vstack((coldata, np.array(data[column_names[i + 1]])))
@@ -70,25 +70,32 @@ class MiniSOMInformer(CatInformer):
     This will make a pickle file containing the `minisom` SOM object that
     will be used by the estimation/summarization stage
     """
-    name = 'MiniSOMInformer'
+
+    name = "MiniSOMInformer"
     config_options = CatInformer.config_options.copy()
-    config_options.update(nondetect_val=SHARED_PARAMS,
-                          mag_limits=SHARED_PARAMS,
-                          bands=SHARED_PARAMS,
-                          ref_band=SHARED_PARAMS,
-                          hdf5_groupname=SHARED_PARAMS,
-                          column_usage=Param(str, "magandcolors", msg="switch for how SOM uses columns, "
-                                             + "valid values are 'colors', 'magandcolors', and 'columns'"),
-                          seed=Param(int, 0, msg="Random number seed"),
-                          m_dim=Param(int, 31, msg="number of cells in SOM y dimension"),
-                          n_dim=Param(int, 31, msg="number of cells in SOM x dimension"),
-                          som_sigma=Param(float, 1.5, msg="sigma param in SOM training"),
-                          som_learning_rate=Param(float, 0.5, msg="SOM learning rate"),
-                          som_iterations=Param(int, 10_000, msg="number of iterations in SOM training"))
+    config_options.update(
+        nondetect_val=SHARED_PARAMS,
+        mag_limits=SHARED_PARAMS,
+        bands=SHARED_PARAMS,
+        ref_band=SHARED_PARAMS,
+        hdf5_groupname=SHARED_PARAMS,
+        column_usage=Param(
+            str,
+            "magandcolors",
+            msg="switch for how SOM uses columns, "
+            + "valid values are 'colors', 'magandcolors', and 'columns'",
+        ),
+        seed=Param(int, 0, msg="Random number seed"),
+        m_dim=Param(int, 31, msg="number of cells in SOM y dimension"),
+        n_dim=Param(int, 31, msg="number of cells in SOM x dimension"),
+        som_sigma=Param(float, 1.5, msg="sigma param in SOM training"),
+        som_learning_rate=Param(float, 0.5, msg="SOM learning rate"),
+        som_iterations=Param(int, 10_000, msg="number of iterations in SOM training"),
+    )
 
     def __init__(self, args, **kwargs):
-        """ Constructor:
-        Do Informer specific initialization """
+        """Constructor:
+        Do Informer specific initialization"""
         super().__init__(args, **kwargs)
         self.model = None
 
@@ -97,9 +104,9 @@ class MiniSOMInformer(CatInformer):
         **NOT** spectroscopic data!
         """
         if self.config.hdf5_groupname:
-            training_data = self.get_data('input')[self.config.hdf5_groupname]
+            training_data = self.get_data("input")[self.config.hdf5_groupname]
         else:  # pragma: no cover
-            training_data = self.get_data('input')
+            training_data = self.get_data("input")
         # replace nondetects
         for col in self.config.bands:
             if np.isnan(self.config.nondetect_val):  # pragma: no cover
@@ -108,23 +115,35 @@ class MiniSOMInformer(CatInformer):
                 mask = np.isclose(training_data[col], self.config.nondetect_val)
             training_data[col][mask] = self.config.mag_limits[col]
 
-        colors = _computemagcolordata(training_data, self.config.ref_band,
-                                      self.config.bands, self.config.column_usage)
+        colors = _computemagcolordata(
+            training_data,
+            self.config.ref_band,
+            self.config.bands,
+            self.config.column_usage,
+        )
 
-        som = MiniSom(self.config.n_dim, self.config.m_dim, colors.shape[1],
-                      sigma=self.config.som_sigma,
-                      learning_rate=self.config.som_learning_rate,
-                      neighborhood_function='gaussian',
-                      random_seed=self.config.seed)
+        som = MiniSom(
+            self.config.n_dim,
+            self.config.m_dim,
+            colors.shape[1],
+            sigma=self.config.som_sigma,
+            learning_rate=self.config.som_learning_rate,
+            neighborhood_function="gaussian",
+            random_seed=self.config.seed,
+        )
         som.pca_weights_init(colors)
         som.train(colors, self.config.som_iterations, verbose=True)
 
-        modeldict = dict(som=som, usecols=self.config.bands,
-                         ref_column=self.config.ref_band,
-                         m_dim=self.config.m_dim, n_dim=self.config.n_dim,
-                         column_usage=self.config.column_usage)
+        modeldict = dict(
+            som=som,
+            usecols=self.config.bands,
+            ref_column=self.config.ref_band,
+            m_dim=self.config.m_dim,
+            n_dim=self.config.n_dim,
+            column_usage=self.config.column_usage,
+        )
         self.model = modeldict
-        self.add_data('model', self.model)
+        self.add_data("model", self.model)
 
 
 class MiniSOMSummarizer(SZPZSummarizer):
@@ -166,25 +185,36 @@ class MiniSOMSummarizer(SZPZSummarizer):
     remove/mitigate these 'uncovered' objects.
 
     """
-    name = 'MiniSOMSummarizer'
+
+    name = "MiniSOMSummarizer"
     config_options = SZPZSummarizer.config_options.copy()
-    config_options.update(zmin=SHARED_PARAMS,
-                          zmax=SHARED_PARAMS,
-                          nzbins=SHARED_PARAMS,
-                          nondetect_val=SHARED_PARAMS,
-                          mag_limits=SHARED_PARAMS,
-                          hdf5_groupname=SHARED_PARAMS,
-                          redshift_col=SHARED_PARAMS,
-                          objid_name=Param(str, "", "name of ID column, if present will be written to cellid_output"),
-                          spec_groupname=Param(str, "photometry", msg="name of hdf5 group for spec data, if None, then set to ''"),
-                          seed=Param(int, 12345, msg="random seed"),
-                          phot_weightcol=Param(str, "", msg="name of photometry weight, if present"),
-                          spec_weightcol=Param(str, "", msg="name of specz weight col, if present"),
-                          nsamples=Param(int, 20, msg="number of bootstrap samples to generate"))
-    outputs = [('output', QPHandle),
-               ('single_NZ', QPHandle),
-               ('cellid_output', TableHandle),
-               ('uncovered_cell_file', TableHandle)]
+    config_options.update(
+        zmin=SHARED_PARAMS,
+        zmax=SHARED_PARAMS,
+        nzbins=SHARED_PARAMS,
+        nondetect_val=SHARED_PARAMS,
+        mag_limits=SHARED_PARAMS,
+        hdf5_groupname=SHARED_PARAMS,
+        redshift_col=SHARED_PARAMS,
+        objid_name=Param(
+            str, "", "name of ID column, if present will be written to cellid_output"
+        ),
+        spec_groupname=Param(
+            str,
+            "photometry",
+            msg="name of hdf5 group for spec data, if None, then set to ''",
+        ),
+        seed=Param(int, 12345, msg="random seed"),
+        phot_weightcol=Param(str, "", msg="name of photometry weight, if present"),
+        spec_weightcol=Param(str, "", msg="name of specz weight col, if present"),
+        nsamples=Param(int, 20, msg="number of bootstrap samples to generate"),
+    )
+    outputs = [
+        ("output", QPHandle),
+        ("single_NZ", QPHandle),
+        ("cellid_output", TableHandle),
+        ("uncovered_cell_file", TableHandle),
+    ]
 
     def __init__(self, args, **kwargs):
         self.zgrid = None
@@ -198,24 +228,26 @@ class MiniSOMSummarizer(SZPZSummarizer):
         self.n_dim = None
 
     def run(self):
-        self.open_model(**self.config)               
-        self.som = self.model['som']
-        self.usecols = self.model['usecols']
-        self.column_usage = self.model['column_usage']
-        self.ref_column_name = self.model['ref_column']
-        self.m_dim = self.model['m_dim']
-        self.n_dim = self.model['n_dim']        
+        self.open_model(**self.config)
+        self.som = self.model["som"]
+        self.usecols = self.model["usecols"]
+        self.column_usage = self.model["column_usage"]
+        self.ref_column_name = self.model["ref_column"]
+        self.m_dim = self.model["m_dim"]
+        self.n_dim = self.model["n_dim"]
         rng = np.random.default_rng(seed=self.config.seed)
         if self.config.hdf5_groupname:
-            test_data = self.get_data('input')[self.config.hdf5_groupname]
+            test_data = self.get_data("input")[self.config.hdf5_groupname]
         else:  # pragma: no cover
-            test_data = self.get_data('input')
+            test_data = self.get_data("input")
         if self.config.spec_groupname:
-            spec_data = self.get_data('spec_input')[self.config.hdf5_groupname]
+            spec_data = self.get_data("spec_input")[self.config.hdf5_groupname]
         else:  # pragma: no cover
-            spec_data = self.get_data('spec_input')
+            spec_data = self.get_data("spec_input")
         if self.config.redshift_col not in spec_data.keys():  # pragma: no cover
-            raise ValueError(f"redshift column {self.config.redshift_colname} not found in spec_data")
+            raise ValueError(
+                f"redshift column {self.config.redshift_colname} not found in spec_data"
+            )
         sz = spec_data[self.config.redshift_col]
         for col in self.usecols:
             if col not in test_data.keys():  # pragma: no cover
@@ -237,7 +269,9 @@ class MiniSOMSummarizer(SZPZSummarizer):
                     mask = np.isclose(dset[col], self.config.nondetect_val)
                 dset[col][mask] = self.config.mag_limits[col]
 
-        self.zgrid = np.linspace(self.config.zmin, self.config.zmax, self.config.nzbins + 1)
+        self.zgrid = np.linspace(
+            self.config.zmin, self.config.zmax, self.config.nzbins + 1
+        )
         # assign weight vecs if present, else set all to 1.0
         # tested in example notebook, so just put a pragma no cover for if present
         if self.config.phot_weightcol == "":
@@ -245,30 +279,40 @@ class MiniSOMSummarizer(SZPZSummarizer):
         elif self.config.phot_weightcol in test_data.keys():  # pragma: no cover
             pweight = np.array(test_data[self.config.phot_weightcol])
         else:  # pragma: no cover
-            raise KeyError(f"photometric weight column {self.config.phot_weightcol} not present in data!")
+            raise KeyError(
+                f"photometric weight column {self.config.phot_weightcol} not present in data!"
+            )
         if self.config.spec_weightcol == "":
             sweight = np.ones(len(spec_data[self.usecols[0]]))
         elif self.config.spec_weightcol in test_data.keys():  # pragma: no cover
             sweight = np.array(spec_data[self.config.spec_weightcol])
         else:  # pragma: no cover
-            raise KeyError(f"spectroscopic weight column {self.config.spec_weightcol} not present in data!")
+            raise KeyError(
+                f"spectroscopic weight column {self.config.spec_weightcol} not present in data!"
+            )
 
         # find the best cells for the photometric and spectrosopic datasets
-        phot_colors = _computemagcolordata(test_data, self.ref_column_name,
-                                           self.usecols, self.column_usage)
-        spec_colors = _computemagcolordata(spec_data, self.ref_column_name,
-                                           self.usecols, self.column_usage)
+        phot_colors = _computemagcolordata(
+            test_data, self.ref_column_name, self.usecols, self.column_usage
+        )
+        spec_colors = _computemagcolordata(
+            spec_data, self.ref_column_name, self.usecols, self.column_usage
+        )
 
         phot_som_coords = np.array([self.som.winner(x) for x in phot_colors]).T
         spec_som_coords = np.array([self.som.winner(x) for x in spec_colors]).T
-        phot_pixel_coords = np.ravel_multi_index(phot_som_coords, (self.n_dim, self.m_dim))
-        spec_pixel_coords = np.ravel_multi_index(spec_som_coords, (self.n_dim, self.m_dim))
+        phot_pixel_coords = np.ravel_multi_index(
+            phot_som_coords, (self.n_dim, self.m_dim)
+        )
+        spec_pixel_coords = np.ravel_multi_index(
+            spec_som_coords, (self.n_dim, self.m_dim)
+        )
 
         # add id coords to id_dict for writeout
         xcoord, ycoord = phot_som_coords
-        id_dict['coord0'] = xcoord
-        id_dict['coord1'] = ycoord
-        id_dict['ravel_coord'] = phot_pixel_coords
+        id_dict["coord0"] = xcoord
+        id_dict["coord1"] = ycoord
+        id_dict["ravel_coord"] = phot_pixel_coords
 
         num_pixels = self.n_dim * self.m_dim
         ngal = len(spec_pixel_coords)
@@ -276,7 +320,9 @@ class MiniSOMSummarizer(SZPZSummarizer):
         spec_pixel_set = set(spec_pixel_coords)
         uncovered_pixels = phot_pixel_set - spec_pixel_set
         bad_pix = dict(uncovered_pixels=np.array(list(uncovered_pixels)))
-        print("the following pixels contain photometric data but not spectroscopic data:")
+        print(
+            "the following pixels contain photometric data but not spectroscopic data:"
+        )
         print(uncovered_pixels)
         useful_pixels = phot_pixel_set - uncovered_pixels
         print(f"{len(useful_pixels)} out of {num_pixels} have usable data")
@@ -289,17 +335,21 @@ class MiniSOMSummarizer(SZPZSummarizer):
             bs_specz_coords = spec_pixel_coords[bootstrap_indices]
             tmp_hist_vals = np.zeros(len(self.zgrid) - 1)
             for pix in useful_pixels:
-                pmask = (phot_pixel_coords == pix)
+                pmask = phot_pixel_coords == pix
                 binpweight = np.sum(pweight[pmask])
-                smask = (bs_specz_coords == pix)
-                pix_hist_vals, _ = np.histogram(bs_specz[smask], bins=self.zgrid, weights=bs_weights[smask])
+                smask = bs_specz_coords == pix
+                pix_hist_vals, _ = np.histogram(
+                    bs_specz[smask], bins=self.zgrid, weights=bs_weights[smask]
+                )
                 tmp_hist_vals += pix_hist_vals * binpweight
             hist_vals[i, :] = tmp_hist_vals
 
-        sample_ens = qp.Ensemble(qp.hist, data=dict(bins=self.zgrid, pdfs=np.atleast_2d(hist_vals)))
+        sample_ens = qp.Ensemble(
+            qp.hist, data=dict(bins=self.zgrid, pdfs=np.atleast_2d(hist_vals))
+        )
         fid_hist = np.mean(hist_vals, axis=0)
         qp_d = qp.Ensemble(qp.hist, data=dict(bins=self.zgrid, pdfs=fid_hist))
-        self.add_data('output', sample_ens)
-        self.add_data('single_NZ', qp_d)
-        self.add_data('uncovered_cell_file', bad_pix)
-        self.add_data('cellid_output', id_dict)
+        self.add_data("output", sample_ens)
+        self.add_data("single_NZ", qp_d)
+        self.add_data("uncovered_cell_file", bad_pix)
+        self.add_data("cellid_output", id_dict)

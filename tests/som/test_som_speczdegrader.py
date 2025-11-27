@@ -1,16 +1,19 @@
 import os
+
 import numpy as np
 import pandas as pd
 import pytest
-from rail.core.stage import RailStage
 from rail.core.data import DATA_STORE, PqHandle
+from rail.core.stage import RailStage
+
 from rail.creation.degraders.specz_som import SOMSpecSelector
+
 
 def test_SOMSpecSelector():
     """test of the specz subset degrader"""
     nspec = 1000
     ninput = 10000
-    columns = ['redshift', 'u', 'g', 'r', 'i', 'z', 'y']
+    columns = ["redshift", "u", "g", "r", "i", "z", "y"]
     specdict = {}
     inputdict = {}
     rng = np.random.default_rng(1138)
@@ -31,22 +34,23 @@ def test_SOMSpecSelector():
     spec_data = DS.add_data("spec_data", specdf, PqHandle)
     input_data = DS.add_data("input_data", inputdf, PqHandle)
 
+    noncol_cols = ["i", "redshift"]
+    col_cols = ["u", "g", "r", "i", "z", "y"]
 
-    noncol_cols = ['i', 'redshift']
-    col_cols = ['u', 'g', 'r', 'i', 'z', 'y']
-    
-    noncol_nondet = [28.62, -1.0 ]
+    noncol_nondet = [28.62, -1.0]
     col_nondet = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
-    som_dict = dict(color_cols=col_cols,
-                    noncolor_cols=noncol_cols,
-                    nondetect_val=99.0,
-                    noncolor_nondet=noncol_nondet,
-                    color_nondet=col_nondet)
+    som_dict = dict(
+        color_cols=col_cols,
+        noncolor_cols=noncol_cols,
+        nondetect_val=99.0,
+        noncolor_nondet=noncol_nondet,
+        color_nondet=col_nondet,
+    )
 
-    som_degrade = SOMSpecSelector.make_stage(name="roman_som_degrader", 
-                                             output="test_degraded_som.pq", 
-                                             **som_dict)
+    som_degrade = SOMSpecSelector.make_stage(
+        name="roman_som_degrader", output="test_degraded_som.pq", **som_dict
+    )
     cutdf = som_degrade(input_data)
     for col in columns:
         assert col in cutdf().keys()
