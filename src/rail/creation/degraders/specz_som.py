@@ -49,6 +49,7 @@ class SOMSpecSelector(Selector):
     """
 
     name = "SOMSpecSelector"
+    entrypoint_function = "__call__"  # the user-facing science function for this class
     config_options = Selector.config_options.copy()
     config_options.update(
         nondetect_val=SHARED_PARAMS,

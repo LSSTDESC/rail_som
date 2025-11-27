@@ -183,6 +183,7 @@ class SOMocluInformer(CatInformer):
     """
 
     name = "SOMocluInformer"
+    entrypoint_function = "inform"  # the user-facing science function for this class
     config_options = CatInformer.config_options.copy()
     config_options.update(
         nondetect_val=SHARED_PARAMS,
@@ -336,6 +337,7 @@ class SOMocluSummarizer(SZPZSummarizer):
     """
 
     name = "SOMocluSummarizer"
+    entrypoint_function = "summarize"  # the user-facing science function for this class
     config_options = SZPZSummarizer.config_options.copy()
     config_options.update(
         zmin=SHARED_PARAMS,
