@@ -12,6 +12,7 @@ from rail.estimation.estimator import CatInformer
 from rail.estimation.summarizer import SZPZSummarizer
 from scipy.spatial.distance import cdist
 from somoclu import Somoclu
+import tables_io
 
 
 def _computemagcolordata(data, mag_column_name, column_names, colusage):
@@ -397,6 +398,7 @@ class SOMocluSummarizer(SZPZSummarizer):
         self.ref_column_name = None
         self.n_rows = None
         self.n_columns = None
+        self._partial_output = {}
 
     def replace_non_detections(self, data):
         """
@@ -552,7 +554,21 @@ class SOMocluSummarizer(SZPZSummarizer):
             first = False
 
         # We have finished writting the cell IDs, and we need to close the file in all process
-        self._cellid_handle.finalize_write()
+        if self.config.output_mode != "return":
+            self._cellid_handle.finalize_write()
+        elif self.config.output_mode == "return":
+            # gather the chunked data
+            chunk_keys = list(sorted(self._partial_output.keys()))
+            if len(chunk_keys) <= 1:
+                self._cellid_handle.set_data(self._partial_output[chunk_keys[0]])
+            else:
+                # combine the chunked data and add to data handle
+                gathered_data = []
+                for key in chunk_keys:
+                    gathered_data.append(self._partial_output[key])
+                gathered_tables = tables_io.concat_tabledict(gathered_data)
+                self._cellid_handle.set_data(gathered_tables)
+            self._partial_output = {}
 
         # If we are running in parallel then we need to sum
         # the results from all the processes
@@ -709,8 +725,15 @@ class SOMocluSummarizer(SZPZSummarizer):
     def _do_chunk_output(self, id_dict, start, end, first):
         if first:
             self._cellid_handle = self.add_handle("cellid_output", data=id_dict)
-            self._cellid_handle.initialize_write(
-                self._input_length, communicator=self.comm
-            )
+
+            if self.config.output_mode != "return":
+                self._cellid_handle.initialize_write(
+                    self._input_length, communicator=self.comm
+                )
         self._cellid_handle.set_data(id_dict, partial=True)
-        self._cellid_handle.write_chunk(start, end)
+
+        if self.config.output_mode != "return":
+            self._cellid_handle.write_chunk(start, end)
+        elif self.config.output_mode == "return":
+            # add data to partial output dictionary
+            self._partial_output[(start, end)] = id_dict

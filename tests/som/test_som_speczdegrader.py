@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 import pytest
-from rail.core.data import DATA_STORE, PqHandle
+from rail.core.data import PqHandle
 from rail.core.stage import RailStage
 
 from rail.creation.degraders.specz_som import SOMSpecSelector

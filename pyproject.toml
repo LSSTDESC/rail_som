@@ -22,6 +22,7 @@ dependencies = [
     "scikit-learn",
     "minisom",
     "somoclu",
+    "tables_io"
 ]
 
 # On a mac, install optional dependencies with `pip install '.[dev]'` (include the single quotes)

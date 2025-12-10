@@ -12,8 +12,8 @@ testszdata = os.path.join(RAILDIR, "rail/examples_data/testdata/training_100gal.
 testphotdata = os.path.join(
     RAILDIR, "rail/examples_data/testdata/validation_10gal.hdf5"
 )
-DS = RailStage.data_store
-DS.__class__.allow_overwrite = True
+# DS = RailStage.data_store
+# DS.__class__.allow_overwrite = True
 
 
 def one_algo(key, inform_class, summarizer_class, summary_kwargs):
@@ -21,8 +21,13 @@ def one_algo(key, inform_class, summarizer_class, summary_kwargs):
     A basic test of running an summaizer subclass
     Run summarize
     """
-    spec_data = DS.read_file("spec_data", TableHandle, testszdata)
-    phot_data = DS.read_file("phot_data", TableHandle, testphotdata)
+
+    spec_data = TableHandle("spec_data", path=testszdata)
+    spec_data = spec_data.read()
+    phot_data = TableHandle("phot_data", path=testphotdata)
+    phot_data = phot_data.read()
+    # spec_data = DS.read_file("spec_data", TableHandle, testszdata)
+    # phot_data = DS.read_file("phot_data", TableHandle, testphotdata)
     informer = inform_class.make_stage(
         name=f"inform_" + key,
         model=f"tmpsomoclu_" + key + ".pkl",
