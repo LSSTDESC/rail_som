@@ -73,6 +73,7 @@ class MiniSOMInformer(CatInformer):
 
     name = "MiniSOMInformer"
     entrypoint_function = "inform"  # the user-facing science function for this class
+    interactive_function = "mini_som_informer"
     config_options = CatInformer.config_options.copy()
     config_options.update(
         nondetect_val=SHARED_PARAMS,
@@ -189,6 +190,7 @@ class MiniSOMSummarizer(SZPZSummarizer):
 
     name = "MiniSOMSummarizer"
     entrypoint_function = "summarize"  # the user-facing science function for this class
+    interactive_function = "mini_som_summarizer"
     config_options = SZPZSummarizer.config_options.copy()
     config_options.update(
         zmin=SHARED_PARAMS,
