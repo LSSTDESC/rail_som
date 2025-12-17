@@ -92,8 +92,10 @@ class SOMSpecSelector(Selector):
         # if self.config.redshift_cut < 0:
         #     raise ValueError("redshift cut must be positive")
 
-    def __call__(self, input_data: TableLike, spec_data: TableLike) -> DataHandle:
-        """_summary_
+    def __call__(
+        self, input_data: TableLike, spec_data: TableLike, **kwargs
+    ) -> PqHandle:
+        """Entrypoint function for SomSpecSelector
 
         Parameters
         ----------
@@ -104,7 +106,7 @@ class SOMSpecSelector(Selector):
 
         Returns
         -------
-        DataHandle
+        PqHandle
             A handle giving access to a table with selected sample
         """
         self.set_data("input", input_data)
