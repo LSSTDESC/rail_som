@@ -29,10 +29,12 @@ def test_SOMSpecSelector():
     specdf = pd.DataFrame(specdict)
     inputdf = pd.DataFrame(inputdict)
 
-    DS = RailStage.data_store
-    DS.__class__.allow_overwrite = True
-    spec_data = DS.add_data("spec_data", specdf, PqHandle)
-    input_data = DS.add_data("input_data", inputdf, PqHandle)
+    # DS = RailStage.data_store
+    # DS.__class__.allow_overwrite = True
+    # spec_data = DS.add_data("spec_data", specdf, PqHandle)
+    # input_data = DS.add_data("input_data", inputdf, PqHandle)
+    spec_data = PqHandle("spec_data", data=specdf)
+    input_data = PqHandle("input_data", data=inputdf)
 
     noncol_cols = ["i", "redshift"]
     col_cols = ["u", "g", "r", "i", "z", "y"]
@@ -49,8 +51,13 @@ def test_SOMSpecSelector():
     )
 
     som_degrade = SOMSpecSelector.make_stage(
-        name="roman_som_degrader", output="test_degraded_som.pq", **som_dict
+        name="roman_som_degrader",
+        output="test_degraded_som.pq",
+        **som_dict,
     )
-    cutdf = som_degrade(input_data)
+    cutdf = som_degrade(
+        input_data=input_data,
+        spec_data=spec_data,
+    )
     for col in columns:
         assert col in cutdf().keys()

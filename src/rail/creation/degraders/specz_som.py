@@ -4,7 +4,7 @@
 import numpy as np
 from ceci.config import StageParameter as Param
 from rail.core.common_params import SHARED_PARAMS
-from rail.core.data import TableHandle
+from rail.core.data import TableHandle, DataHandle, PqHandle, TableLike
 
 # import pandas as pd
 # import pickle
@@ -91,6 +91,27 @@ class SOMSpecSelector(Selector):
         # if self.config.redshift_cut < 0:
         #     raise ValueError("redshift cut must be positive")
 
+    def __call__(self, input_data: TableLike, spec_data: TableLike) -> DataHandle:
+        """_summary_
+
+        Parameters
+        ----------
+        input_data : TableLike
+            The sample to be selected
+        spec_data : TableLike
+            A reference/spectroscopic data set
+
+        Returns
+        -------
+        DataHandle
+            A handle giving access to a table with selected sample
+        """
+        self.set_data("input", input_data)
+        self.set_data("spec_data", spec_data)
+        self.run()
+        self.finalize()
+        return self.get_handle("output")
+
     def make_data_selection(self, df):
         """make the data to train the som or input to som"""
         df = df.copy()
@@ -108,6 +129,7 @@ class SOMSpecSelector(Selector):
 
     def _select(self):
         """code to do the main SOM-based selection"""
+
         spec_data = self.get_data("spec_data")
         deep_data = self.get_data("input")
         # do some checks on whether data is set up properly and remove non-detects
