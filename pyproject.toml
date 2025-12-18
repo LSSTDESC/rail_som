@@ -18,7 +18,7 @@ dynamic = ["version"]
 dependencies = [
     "deprecated",
     "pandas",
-    "pz-rail-base>=2.0.0",
+    "pz-rail-base>=2.0.0-dev",
     "scikit-learn",
     "minisom",
     "somoclu",
