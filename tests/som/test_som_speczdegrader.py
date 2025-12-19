@@ -29,10 +29,6 @@ def test_SOMSpecSelector():
     specdf = pd.DataFrame(specdict)
     inputdf = pd.DataFrame(inputdict)
 
-    # DS = RailStage.data_store
-    # DS.__class__.allow_overwrite = True
-    # spec_data = DS.add_data("spec_data", specdf, PqHandle)
-    # input_data = DS.add_data("input_data", inputdf, PqHandle)
     spec_data = PqHandle("spec_data", data=specdf)
     input_data = PqHandle("input_data", data=inputdf)
 
