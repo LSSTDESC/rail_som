@@ -201,7 +201,7 @@ class MiniSOMSummarizer(SZPZSummarizer):
         hdf5_groupname=SHARED_PARAMS,
         redshift_col=SHARED_PARAMS,
         objid_name=Param(
-            str, "", "name of ID column, if present will be written to cellid_output"
+            str, "", msg="name of ID column, if present will be written to cellid_output"
         ),
         spec_groupname=Param(
             str,
@@ -211,7 +211,7 @@ class MiniSOMSummarizer(SZPZSummarizer):
         seed=Param(int, 12345, msg="random seed"),
         phot_weightcol=Param(str, "", msg="name of photometry weight, if present"),
         spec_weightcol=Param(str, "", msg="name of specz weight col, if present"),
-        nsamples=Param(int, 20, msg="number of bootstrap samples to generate"),
+        n_samples=Param(int, 20, msg="number of bootstrap samples to generate"),
     )
     outputs = [
         ("output", QPHandle),
@@ -331,8 +331,8 @@ class MiniSOMSummarizer(SZPZSummarizer):
         useful_pixels = phot_pixel_set - uncovered_pixels
         print(f"{len(useful_pixels)} out of {num_pixels} have usable data")
 
-        hist_vals = np.empty((self.config.nsamples, len(self.zgrid) - 1))
-        for i in range(self.config.nsamples):
+        hist_vals = np.empty((self.config.n_samples, len(self.zgrid) - 1))
+        for i in range(self.config.n_samples):
             bootstrap_indices = rng.integers(low=0, high=ngal, size=ngal)
             bs_specz = sz[bootstrap_indices]
             bs_weights = sweight[bootstrap_indices]

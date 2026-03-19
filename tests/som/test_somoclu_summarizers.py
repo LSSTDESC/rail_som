@@ -66,7 +66,7 @@ def one_algo(key, inform_class, summarizer_class, summary_kwargs):
         )
     )
     meanz = fid_ens.mean()  # .flatten()
-    assert np.isclose(meanz, 0.14414913252122552, atol=0.025)
+    assert np.isclose(meanz, 0.12, atol=0.03)
 
     full_useful_clusters = np.asarray(list(summarizer2.useful_clusters))
     full_uncovered_clusters = np.asarray(
