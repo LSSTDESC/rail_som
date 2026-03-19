@@ -204,7 +204,7 @@ class SOMocluInformer(CatInformer):
         seed=Param(int, 0, msg="Random number seed"),
         n_rows=Param(int, 31, msg="number of cells in SOM y dimension"),
         n_columns=Param(int, 31, msg="number of cells in SOM x dimension"),
-        gridtype=Param(
+        grid_type=Param(
             str,
             "rectangular",
             msg="Optional parameter to specify the grid form of the nodes:"
@@ -273,7 +273,7 @@ class SOMocluInformer(CatInformer):
         som = Somoclu(
             self.config.n_columns,
             self.config.n_rows,
-            gridtype=self.config.gridtype,
+            gridtype=self.config.grid_type,
             compactsupport=False,
             maptype=self.config.maptype,
             initialization=self.config.initialization,
@@ -362,20 +362,17 @@ class SOMocluSummarizer(SZPZSummarizer):
             + "SOM cells will not be clustered.",
         ),
         objid_name=Param(
-            str, "", "name of ID column, if present will be written to cellid_output"
+            str, "", msg="name of ID column, if present will be written to cellid_output"
         ),
         seed=Param(int, 12345, msg="random seed"),
-        redshift_colname=Param(
-            str, "redshift", msg="name of redshift column in specz file"
-        ),
         phot_weightcol=Param(str, "", msg="name of photometry weight, if present"),
         spec_weightcol=Param(str, "", msg="name of specz weight col, if present"),
-        split=Param(
+        som_split_size=Param(
             int,
             200,
             msg="the size of data chunks when calculating the distances between the codebook and data",
         ),
-        nsamples=Param(int, 20, msg="number of bootstrap samples to generate"),
+        n_samples=Param(int, 20, msg="number of bootstrap samples to generate"),
         useful_clusters=Param(
             list,
             [],
@@ -439,7 +436,7 @@ class SOMocluSummarizer(SZPZSummarizer):
             data, self.ref_column_name, self.usecols, self.column_usage
         )
 
-        som_coords = get_bmus(self.som, test_data, self.config.split).T
+        som_coords = get_bmus(self.som, test_data, self.config.som_split_size).T
 
         return som_coords
 
@@ -461,7 +458,7 @@ class SOMocluSummarizer(SZPZSummarizer):
             raise ValueError(
                 f"redshift column {self.config.redshift_col} not found in spec_data"
             )
-        sz = spec_data[self.config.redshift_colname]
+        sz = spec_data[self.config.redshift_col]
 
         self.zgrid = np.linspace(
             self.config.zmin, self.config.zmax, self.config.nzbins + 1
@@ -502,7 +499,7 @@ class SOMocluSummarizer(SZPZSummarizer):
 
         # Creating de indices for the bootstrap sampling, and broadcasting to the other processes
         # if we are running in parallel
-        nsamp = self.config.nsamples
+        nsamp = self.config.n_samples
         if self.rank == 0:
             bootstrap_matrix = rng.integers(low=0, high=ngal, size=(ngal, nsamp))
         else:  # pragma: no cover
@@ -517,9 +514,9 @@ class SOMocluSummarizer(SZPZSummarizer):
         total_chunks = int(np.ceil(self._input_length / self.config.chunk_size))
 
         # Initializing variables that will be used after the chunks
-        hist_vals = np.zeros((self.config.nsamples, len(self.zgrid) - 1))
-        N_eff_p_num = np.zeros(self.config.nsamples)
-        N_eff_p_den = np.zeros(self.config.nsamples)
+        hist_vals = np.zeros((self.config.n_samples, len(self.zgrid) - 1))
+        N_eff_p_num = np.zeros(self.config.n_samples)
+        N_eff_p_den = np.zeros(self.config.n_samples)
         N_eff_num = 0.0
         N_eff_den = 0.0
         phot_cluster_set = set()
@@ -698,7 +695,7 @@ class SOMocluSummarizer(SZPZSummarizer):
         tmp_neff_num = np.sum(test_data["weight"])
         tmp_neff_den = np.sum(test_data["weight"] ** 2)
 
-        for i in range(self.config.nsamples):
+        for i in range(self.config.n_samples):
             bootstrap_indices = bootstrap_matrix[:, i]
             bs_specz = sz[bootstrap_indices]
             bs_weights = sweight[bootstrap_indices]
