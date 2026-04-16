@@ -105,14 +105,14 @@ class SOMSpecSelector(Selector):
         SOM = Somoclu(self.config.som_size[0], self.config.som_size[1],
                       gridtype='rectangular', compactsupport=False,
                       maptype='planar', initialization='pca')
-
+        print(photsomdata.shape, specsomdata.shape)
         SOM.train(photsomdata, epochs=self.config.n_epochs,)
 
         phot_bmu_coords = get_bmus(SOM, photsomdata).T
         spec_bmu_coords = get_bmus(SOM, specsomdata).T
 
         total_mask = np.zeros(len(deep_data), dtype=bool)
-
+        
         for i in range(self.config.som_size[0]):
             for j in range(self.config.som_size[1]):
                 subset = np.logical_and(phot_bmu_coords[0] == i, phot_bmu_coords[1] == j)

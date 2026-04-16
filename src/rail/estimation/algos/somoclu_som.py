@@ -229,9 +229,11 @@ class SOMocluInformer(CatInformer):
 
         som = Somoclu(self.config.n_columns, self.config.n_rows,
                       gridtype=self.config.gridtype, compactsupport=False,
-                      maptype=self.config.maptype, initialization=self.config.initialization)
+                      maptype=self.config.maptype, initialization=self.config.initialization,
+                      std_coeff=self.config.std_coeff)
 
-        som.train(colors, epochs=self.config.n_epochs,)
+        som.train(colors, epochs=self.config.n_epochs,
+                  scale0=self.config.som_learning_rate)
 
         modeldict = dict(som=som, usecols=self.config.bands,
                          ref_column=self.config.ref_band,
@@ -305,8 +307,8 @@ class SOMocluSummarizer(SZPZSummarizer):
                                                +"all the clusters containing spec sample are used."),)
     outputs = [('output', QPHandle),
                ('single_NZ', QPHandle),
-               ('cellid_output', Hdf5Handle),
-               ('uncovered_cluster_file', TableHandle)]
+               ('cellid_output', Hdf5Handle)]
+               # ('uncovered_cluster_file', TableHandle)]
 
     def __init__(self, args, **kwargs):
         self.zgrid = None
@@ -433,6 +435,7 @@ class SOMocluSummarizer(SZPZSummarizer):
             print(f"Process {self.rank} running summarizer on chunk {s} - {e}")
 
             chunk_number = s//self.config.chunk_size
+            # print(chunk_number)
             tmp_neff_num, tmp_neff_den = self._process_chunk(test_data, bootstrap_matrix, som_cluster_inds, spec_cluster_set, phot_cluster_set, sz, spec_data['weight'], spec_som_clusterind, N_eff_p_num, N_eff_p_den, hist_vals, id_dict, s, e, first, bad_clusters)
             N_eff_num += tmp_neff_num
             N_eff_den += tmp_neff_den
@@ -452,7 +455,7 @@ class SOMocluSummarizer(SZPZSummarizer):
             hist_vals = self.comm.reduce(hist_vals)
             N_eff_num = self.comm.reduce(N_eff_num)
             N_eff_den = self.comm.reduce(N_eff_den)
-            bad_clusters = self.comm.reduce(bad_clusters)
+            # bad_clusters = self.comm.reduce(bad_clusters)
             
             phot_cluster_list=np.array(list(phot_cluster_set),dtype=int)
             phot_cluster_total=self.comm.gather(phot_cluster_list)
@@ -482,7 +485,7 @@ class SOMocluSummarizer(SZPZSummarizer):
         qp_d = qp.Ensemble(qp.hist, data=dict(bins=self.zgrid, pdfs=fid_hist))
         self.add_data('output', sample_ens)
         self.add_data('single_NZ', qp_d)
-        self.add_data('uncovered_cluster_file', bad_clusters)
+        # self.add_data('uncovered_cluster_file', bad_clusters)
 
     def _process_chunk(self, test_data, bootstrap_matrix, som_cluster_inds, spec_cluster_set, phot_cluster_set, sz, sweight, spec_som_clusterind, N_eff_p_num, N_eff_p_den, hist_vals, id_dict, start, end, first, bad_clusters):
 
